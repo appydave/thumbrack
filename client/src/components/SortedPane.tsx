@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useFolderContext } from '../contexts/FolderContext.js';
+import { useToast } from '../contexts/ToastContext.js';
 import { imageUrl } from '../utils/api.js';
 import { useDragDrop } from '../hooks/useDragDrop.js';
 import { useManualEntry } from '../hooks/useManualEntry.js';
@@ -200,11 +201,12 @@ function DragOverlayItem({ image }: { image: FolderImage }) {
 
 export function SortedPane() {
   const { sorted, unsorted, selected, select, dir, reload } = useFolderContext();
+  const { addToast } = useToast();
   const [localActiveId, setLocalActiveId] = useState<string | null>(null);
   const { menu, openMenu, closeMenu } = useContextMenu();
   const { exclude } = useExclusion(dir, reload);
   const { editingFilename, editValue, setEditValue, startEdit, confirmEdit, cancelEdit } =
-    useManualEntry(dir, reload);
+    useManualEntry(dir, reload, sorted, (msg) => addToast(msg, 'error'));
 
   useKeyboardNav(startEdit);
 

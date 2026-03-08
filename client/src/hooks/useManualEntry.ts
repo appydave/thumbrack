@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { FolderImage } from '@appystack/shared';
 import { renameImage } from '../utils/api.js';
 
 // ---------------------------------------------------------------------------
@@ -18,12 +19,14 @@ export interface UseManualEntryReturn {
  * Manages inline number-editing state for sorted images.
  *
  * - startEdit: enter edit mode for a specific file
- * - confirmEdit: validate, call renameImage, then reload
+ * - confirmEdit: validate, collision-check, call renameImage, then reload
  * - cancelEdit: exit without saving
  */
 export function useManualEntry(
   dir: string | null,
-  reload: () => Promise<void>
+  reload: () => Promise<void>,
+  sorted: FolderImage[],
+  onError: (msg: string) => void,
 ): UseManualEntryReturn {
   const [editingFilename, setEditingFilename] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -49,8 +52,18 @@ export function useManualEntry(
       return;
     }
 
+    // Collision check: block if another image already has this number
+    const occupant = sorted.find(
+      (img) => img.number === parsed && img.filename !== editingFilename
+    );
+    if (occupant) {
+      onError(`Number ${String(parsed).padStart(2, '0')} is already taken`);
+      setEditingFilename(null);
+      setEditValue('');
+      return;
+    }
+
     const filename = editingFilename;
-    // Clear edit mode before the async call so the UI resets immediately
     setEditingFilename(null);
     setEditValue('');
 
@@ -58,8 +71,7 @@ export function useManualEntry(
       await renameImage({ dir, filename, newNumber: parsed });
       await reload();
     } catch {
-      // Error handling: future work unit may add a toast here.
-      // For now we silently swallow and the UI already exited edit mode.
+      onError('Rename failed');
     }
   };
 

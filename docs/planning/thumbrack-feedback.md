@@ -69,4 +69,7 @@
 
 ## Resolved Items
 
-_(none yet — first feedback pass)_
+| # | Item | Resolved in |
+|---|------|-------------|
+| F002 | Duplicate numbers when renaming via badge | wave-1 bugfix — collision check added to `useManualEntry`, blocks rename with error toast "Number XX is already taken" |
+| F003 | Clicking an unsorted image does not open preview | wave-1 bugfix — moved `{...listeners}` off `<li>` onto dedicated drag handle `<div>` in `UnsortedPane`, same pattern as SortedPane fix |

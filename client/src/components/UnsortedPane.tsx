@@ -40,11 +40,20 @@ function UnsortedItem({ image, isSelected, onSelect, onContextMenu }: UnsortedIt
       onClick={onSelect}
       onContextMenu={onContextMenu}
       {...attributes}
-      {...listeners}
       aria-selected={isSelected}
       role="option"
-      style={{ paddingLeft: 10, cursor: 'grab' }}
     >
+      {/* Drag handle — listeners isolated here so click on item falls through */}
+      <div
+        {...listeners}
+        className="drag-handle"
+        title="Drag to assign number"
+        onClick={(e) => e.stopPropagation()}
+        aria-label="Drag handle"
+      >
+        ⠿
+      </div>
+
       <div className="img-thumb">
         {imgError ? (
           <div className="img-thumb-error" aria-label="Image unavailable" data-testid="thumb-error" />
