@@ -1,7 +1,7 @@
 # Project Backlog — ThumbRack
 
 **Last updated**: 2026-03-08
-**Total**: 14 | Pending: 2 | In Progress: 12 | Done: 0 | Deferred: 0 | Rejected: 0
+**Total**: 14 | Pending: 2 | In Progress: 0 | Done: 12 | Deferred: 0 | Rejected: 0
 
 ## Pending
 
@@ -10,20 +10,20 @@
 
 ## In Progress
 
-- [~] B001 — Server: folder listing API (sorted + unsorted image lists) | Campaign: thumbrack-wave1
-- [~] B002 — Server: rename + reorder API with temp-swap conflict resolution | Campaign: thumbrack-wave1
-- [~] B003 — Server: manifest API (read/write .thumbrack.json + regenerate) | Campaign: thumbrack-wave1
-- [~] B004 — Client: app shell — three-pane layout + directory input | Campaign: thumbrack-wave1
-- [~] B005 — Client: sorted image list pane with thumbnails | Campaign: thumbrack-wave1
-- [~] B006 — Client: large image preview pane | Campaign: thumbrack-wave1
-- [~] B007 — Client: unsorted bucket pane | Campaign: thumbrack-wave1
-- [~] B008 — Client: drag-and-drop reorder with visual insertion indicator | Campaign: thumbrack-wave1
-- [~] B009 — Client: manual number entry (type number + Enter to reassign) | Campaign: thumbrack-wave1
-- [~] B010 — Client: exclusion UX (right-click → exclude, greyed section) | Campaign: thumbrack-wave1
-- [~] B011 — Client: manifest regenerate button + toast notifications | Campaign: thumbrack-wave1
-- [~] B012 — Client: keyboard navigation (arrow keys + number+Enter shortcut) | Campaign: thumbrack-wave1
-
 ## Done
+
+- [x] B001 — Server: folder listing API (sorted + unsorted image lists) | Completed: thumbrack-wave1
+- [x] B002 — Server: rename + reorder API with temp-swap conflict resolution | Completed: thumbrack-wave1
+- [x] B003 — Server: manifest API (read/write .thumbrack.json + regenerate) | Completed: thumbrack-wave1
+- [x] B004 — Client: app shell — three-pane layout + directory input | Completed: thumbrack-wave1
+- [x] B005 — Client: sorted image list pane with thumbnails | Completed: thumbrack-wave1
+- [x] B006 — Client: large image preview pane | Completed: thumbrack-wave1
+- [x] B007 — Client: unsorted bucket pane | Completed: thumbrack-wave1
+- [x] B008 — Client: drag-and-drop reorder with visual insertion indicator | Completed: thumbrack-wave1
+- [x] B009 — Client: manual number entry (type number + Enter to reassign) | Completed: thumbrack-wave1
+- [x] B010 — Client: exclusion UX (right-click → exclude, greyed section) | Completed: thumbrack-wave1
+- [x] B011 — Client: manifest regenerate button + toast notifications | Completed: thumbrack-wave1
+- [x] B012 — Client: keyboard navigation (arrow keys + F2/e shortcut) | Completed: thumbrack-wave1
 
 ## Deferred
 

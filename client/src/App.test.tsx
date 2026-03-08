@@ -1,67 +1,25 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import express from 'express';
-import type { Server } from 'node:http';
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import App from './App.js';
 
-// Capture the native fetch at module load time, before any test setup stubs it
-const nativeFetch = globalThis.fetch;
-
-let server: Server;
-let serverPort: number;
-
-beforeAll(
-  () =>
-    new Promise<void>((resolve) => {
-      const app = express();
-      app.get('/health', (_, res) =>
-        res.json({ status: 'ok', timestamp: new Date().toISOString() })
-      );
-      app.get('/api/info', (_, res) =>
-        res.json({
-          status: 'ok',
-          data: { nodeVersion: 'test', environment: 'test', port: 0, clientUrl: '', uptime: 0 },
-        })
-      );
-      server = app.listen(0, () => {
-        serverPort = (server.address() as { port: number }).port;
-        resolve();
-      });
-    })
-);
-
-beforeEach(() => {
-  globalThis.fetch = (input, init) => {
-    const url =
-      typeof input === 'string' && input.startsWith('/')
-        ? `http://localhost:${serverPort}${input}`
-        : input;
-    return nativeFetch(url, init);
-  };
-});
-
-afterAll(
-  () =>
-    new Promise<void>((resolve) => {
-      server?.close(() => resolve());
-    })
-);
-
 describe('App', () => {
-  it('renders the tagline from LandingPage', async () => {
+  it('renders the ThumbRack brand name', () => {
     render(<App />);
-    expect(screen.getByText(/Production-ready RVETS stack boilerplate/)).toBeInTheDocument();
+    expect(screen.getByText('ThumbRack')).toBeInTheDocument();
   });
 
-  it('displays the status grid from DemoPage (DEV mode)', async () => {
+  it('renders the directory path input', () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId('status-grid')).toBeInTheDocument(), {
-      timeout: 5000,
-    });
+    expect(screen.getByRole('textbox', { name: /directory path/i })).toBeInTheDocument();
   });
 
-  it('displays the tech stack section from DemoPage (DEV mode)', async () => {
+  it('renders the Load button', () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId('tech-stack')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /load/i })).toBeInTheDocument();
+  });
+
+  it('renders the empty state when no folder is loaded', () => {
+    render(<App />);
+    expect(screen.getByTestId('empty-state')).toBeInTheDocument();
   });
 });

@@ -5,33 +5,33 @@
 **Target**: All 12 work units complete. App runs on localhost:5020. You can load a folder, view images, drag to reorder, and filenames are renamed immediately on drop.
 
 ## Summary
-- Total: 12 | Complete: 0 | In Progress: 0 | Pending: 12 | Failed: 0
+- Total: 12 | Complete: 12 | In Progress: 0 | Pending: 0 | Failed: 0
 
 ## Pending
-
-### Server
-- [ ] server-folder-api — GET /api/folder?path= returns sorted + unsorted image lists; GET /api/images/:encodedPath serves image files as static assets
-- [ ] server-rename-api — POST /api/rename handles single-file rename with temp-swap conflict resolution; POST /api/reorder handles full sequence reorder (renumbers all affected files)
-- [ ] server-manifest-api — GET/POST /api/manifest?dir= reads/writes .thumbrack.json; POST /api/manifest/regenerate reconciles manifest against current folder contents
-
-### Client — Foundation
-- [ ] client-app-shell — Three-pane layout (left panel with two sub-panes + right preview), directory path input + Load button, global folder state via React context, error/empty states
-- [ ] client-sorted-pane — Numbered thumbnail list (01–99), click to select and preview, shows number prefix + filename, scroll if overflow
-- [ ] client-preview-pane — Large image display on right side, shows selected image, filename label below, handles no-selection state
-
-### Client — Core Interaction
-- [ ] client-unsorted-pane — Unnumbered images bucket below sorted list, separated by a divider label, click to select and preview
-- [ ] client-drag-drop — dnd-kit sortable for sorted list reorder; drag from unsorted bucket into sorted list at a specific position; bold insertion line + colour highlight on drag over; immediate rename on drop
-- [ ] client-manual-entry — Select any sorted image, click its number badge or press a shortcut, type new number, Enter to reassign; file renamed immediately; list re-sorts by number then alpha; no other files move
-- [ ] client-exclusion — Right-click context menu on any image → Exclude / Un-exclude; excluded images shown greyed-out in a third section below unsorted bucket; exclusions stored in manifest
-
-### Client — Polish
-- [ ] client-manifest-ui — Regenerate button in header calls POST /api/manifest/regenerate and reloads folder; toast notifications for rename success, rename failure, manifest regenerated; toasts auto-dismiss after 3s
-- [ ] client-keyboard — Arrow up/down navigate the sorted list; arrow up/down in unsorted bucket navigates that list; selected image previews on arrow key; number+Enter shortcut triggers manual entry mode
 
 ## In Progress
 
 ## Complete
+
+### Client — Polish
+- [x] client-manifest-ui — ToastContext, ToastContainer, Regenerate button. Auto-dismiss at 3s (fake timer tested). 12 tests passing.
+- [x] client-keyboard — useKeyboardNav, arrow navigation across sorted/unsorted, F2/e edit shortcut, INPUT guard. 20 tests passing.
+
+### Client — Core Interaction
+- [x] client-unsorted-pane — Unnumbered bucket, selection, thumbnail error handling, data-id for dnd. 16 tests passing.
+- [x] client-drag-drop — dnd-kit installed, useDragDrop hook, sorted reorder + unsorted→sorted drop, DragOverlay. 12 hook tests passing.
+- [x] client-manual-entry — useManualEntry hook, 1–99 validation, inline input in SortedPane. 19 tests passing.
+- [x] client-exclusion — ContextMenu, useExclusion, ExcludedPane, right-click on all panes, manifest persistence. 37 tests passing.
+
+### Client — Foundation
+- [x] client-app-shell — FolderContext, ThumbRackApp layout, directory input, API utilities, demo/ deleted. 8 tests passing.
+- [x] client-sorted-pane — Numbered thumbnail list, selection highlight, error thumbnail, lazy loading. 16 tests passing.
+- [x] client-preview-pane — Large preview, empty state, error state, filename/path labels. 10 tests passing.
+
+### Server
+- [x] server-folder-api — GET /api/folder + GET /api/images/:encodedPath. 18 tests passing. Sorted/unsorted/excluded split, encodedPath round-trip, extension validation on image serving.
+- [x] server-rename-api — POST /api/rename + POST /api/reorder. 28 tests passing. Two-pass temp-rename strategy unit tested. All validation paths covered.
+- [x] server-manifest-api — GET/POST /api/manifest + POST /api/manifest/regenerate. 24 tests passing. Graceful handling of missing/malformed manifest. Stale exclusion cleanup verified.
 
 ## Failed / Needs Retry
 
@@ -45,4 +45,5 @@
 - **Manifest**: `.thumbrack.json` hidden dot-file in the viewed folder. Stores `{ excluded: string[], lastViewed: string | null }`. Filenames are source of truth for order — manifest never overrides them.
 - **Socket.io**: Not used for ThumbRack. Pure REST — no real-time push needed.
 - **Exclusion in manifest**: Excluded filenames stored as a list. On folder load, any excluded filename found in the folder is moved to the excluded section, not shown in sorted/unsorted.
-- **Wave grouping**: server units first (agents can work in parallel), then foundation client (app shell + sorted + preview), then core interaction (unsorted + drag + manual entry), then polish (exclusion + manifest UI + keyboard).
+- **Wave grouping**: server units first, then foundation client (app shell + sorted + preview), then core interaction (unsorted + drag + manual entry), then polish (exclusion + manifest UI + keyboard).
+- **Wave 1 result**: All 3 server units complete. 149 server tests + 104 client tests all green. Port mismatch in env.test.ts fixed (5501→5021, 5500→5020).

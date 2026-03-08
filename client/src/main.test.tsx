@@ -1,54 +1,9 @@
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import express from 'express';
-import type { Server } from 'node:http';
 import ErrorFallback from './components/ErrorFallback.js';
 import App from './App.js';
-
-// Capture native fetch before any stub replaces it
-const nativeFetch = globalThis.fetch;
-
-let server: Server;
-let serverPort: number;
-
-beforeAll(
-  () =>
-    new Promise<void>((resolve) => {
-      const app = express();
-      app.get('/health', (_, res) =>
-        res.json({ status: 'ok', timestamp: new Date().toISOString() })
-      );
-      app.get('/api/info', (_, res) =>
-        res.json({
-          status: 'ok',
-          data: { nodeVersion: 'test', environment: 'test', port: 0, clientUrl: '', uptime: 0 },
-        })
-      );
-      server = app.listen(0, () => {
-        serverPort = (server.address() as { port: number }).port;
-        resolve();
-      });
-    })
-);
-
-beforeEach(() => {
-  globalThis.fetch = (input, init) => {
-    const url =
-      typeof input === 'string' && input.startsWith('/')
-        ? `http://localhost:${serverPort}${input}`
-        : input;
-    return nativeFetch(url, init);
-  };
-});
-
-afterAll(
-  () =>
-    new Promise<void>((resolve) => {
-      server?.close(() => resolve());
-    })
-);
 
 // Component that always throws — used to test ErrorBoundary catching
 function ThrowingComponent(): never {
@@ -108,6 +63,6 @@ describe('main.tsx wiring — ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText(/Production-ready RVETS stack boilerplate/)).toBeInTheDocument();
+    expect(screen.getByText('ThumbRack')).toBeInTheDocument();
   });
 });

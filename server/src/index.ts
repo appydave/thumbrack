@@ -13,6 +13,10 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import healthRouter from './routes/health.js';
 import infoRouter from './routes/info.js';
+import renameRouter from './routes/rename.js';
+import manifestRouter from './routes/manifest.js';
+import folderRouter from './routes/folder.js';
+import imagesRouter from './routes/images.js';
 import type { ServerToClientEvents, ClientToServerEvents } from '@appystack/shared';
 import { SOCKET_EVENTS } from '@appystack/shared';
 
@@ -30,7 +34,11 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
 });
 
 // Middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 app.use(compression());
 app.use(cors({ origin: env.CLIENT_URL }));
 app.use(express.json());
@@ -42,6 +50,10 @@ app.use(apiLimiter);
 // Routes
 app.use(healthRouter);
 app.use(infoRouter);
+app.use(renameRouter);
+app.use('/api/manifest', manifestRouter);
+app.use('/api/folder', folderRouter);
+app.use('/api/images', imagesRouter);
 
 // Production static file serving — serve the built client app
 if (env.isProduction) {

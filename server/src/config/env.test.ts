@@ -20,8 +20,8 @@ describe('env config', () => {
 
     const { env } = await import('./env.js?defaults=' + Date.now());
 
-    expect(env.PORT).toBe(5501);
-    expect(env.CLIENT_URL).toBe('http://localhost:5500');
+    expect(env.PORT).toBe(5021);
+    expect(env.CLIENT_URL).toBe('http://localhost:5020');
     expect(env.NODE_ENV).toBe('test');
   });
 
