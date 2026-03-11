@@ -36,8 +36,10 @@ const DIR = '/tmp/photos';
 const FILENAME = '05-some-image.png';
 const CURRENT_NUMBER = 5;
 
+const mockOnError = vi.fn();
+
 function renderEntry() {
-  return renderHook(() => useManualEntry(DIR, mockReload));
+  return renderHook(() => useManualEntry(DIR, mockReload, [], mockOnError));
 }
 
 // ---------------------------------------------------------------------------

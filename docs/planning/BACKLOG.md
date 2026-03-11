@@ -1,11 +1,10 @@
 # Project Backlog — ThumbRack
 
 **Last updated**: 2026-03-08
-**Total**: 14 | Pending: 2 | In Progress: 0 | Done: 12 | Deferred: 0 | Rejected: 0
+**Total**: 18 | Pending: 1 | In Progress: 0 | Done: 17 | Deferred: 0 | Rejected: 0
 
 ## Pending
 
-- [ ] B013 — Zoom / fit modes on preview pane | Priority: low
 - [ ] B014 — Undo last rename operation | Priority: low
 
 ## In Progress
@@ -24,6 +23,11 @@
 - [x] B010 — Client: exclusion UX (right-click → exclude, greyed section) | Completed: thumbrack-wave1
 - [x] B011 — Client: manifest regenerate button + toast notifications | Completed: thumbrack-wave1
 - [x] B012 — Client: keyboard navigation (arrow keys + F2/e shortcut) | Completed: thumbrack-wave1
+- [x] B013 — Zoom / fit modes on preview pane | Completed: thumbrack-wave2
+- [x] B015 — Sidebar too narrow — S/M/L size presets | Completed: thumbrack-wave2
+- [x] B016 — Default folder pre-fill (~/Downloads) + recent folders dropdown | Completed: thumbrack-wave2
+- [x] B017 — Regenerate button tooltip + move to kebab/options menu | Completed: thumbrack-wave2
+- [x] B018 — Sidebar drag-to-resize or S/M/L size presets (resolved with B015) | Completed: thumbrack-wave2
 
 ## Deferred
 

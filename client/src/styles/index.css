@@ -615,6 +615,50 @@ body {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* ── Sidebar size controls ─────────────────────────────────────────────────── */
+
+.sidebar-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sidebar);
+  flex-shrink: 0;
+}
+
+.sidebar-size-btn {
+  height: 22px;
+  width: 28px;
+  background: transparent;
+  color: var(--text-3);
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.sidebar-size-btn:hover:not(.active) {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.sidebar-size-btn.active {
+  background: var(--amber-dim);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+/* S-mode: suppress filenames so the sidebar becomes a true filmstrip */
+[data-sidebar-size="S"] .img-label {
+  display: none;
+}
+
 /* ── DragOverlay card ──────────────────────────────────────────────────────── */
 
 .drag-overlay {
@@ -627,4 +671,79 @@ body {
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   width: 220px;
+}
+
+/* ── Kebab menu ─────────────────────────────────────────────────────────────── */
+
+.kebab-menu-root {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.btn-kebab {
+  height: 32px;
+  width: 32px;
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-kebab:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.kebab-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 1000;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 200px;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.4),
+    0 2px 8px rgba(0,0,0,0.3);
+}
+
+.kebab-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.kebab-menu-item:hover {
+  background: var(--surface-3);
+}
+
+.kebab-menu-item-label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+.kebab-menu-item-desc {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
 }

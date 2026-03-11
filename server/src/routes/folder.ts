@@ -1,8 +1,13 @@
 import { Router } from 'express';
 import { promises as fs } from 'node:fs';
 import { join, extname } from 'node:path';
+import { homedir } from 'node:os';
 import type { FolderImage, FolderResponse, ManifestData } from '@appystack/shared';
 import { apiSuccess, apiFailure } from '../helpers/response.js';
+
+function expandHome(p: string): string {
+  return p.startsWith('~/') ? join(homedir(), p.slice(2)) : p;
+}
 
 const router = Router();
 
@@ -60,21 +65,23 @@ router.get('/', async (req, res) => {
     return;
   }
 
+  const resolvedDir = expandHome(dir);
+
   try {
-    await fs.access(dir);
+    await fs.access(resolvedDir);
   } catch {
-    apiFailure(res, `Directory not found: ${dir}`, 404);
+    apiFailure(res, `Directory not found: ${resolvedDir}`, 404);
     return;
   }
 
-  const manifest = await readManifest(dir);
+  const manifest = await readManifest(resolvedDir);
   const excludedSet = new Set(manifest.excluded);
 
   let entries: string[];
   try {
-    entries = await fs.readdir(dir);
+    entries = await fs.readdir(resolvedDir);
   } catch {
-    apiFailure(res, `Failed to read directory: ${dir}`, 500);
+    apiFailure(res, `Failed to read directory: ${resolvedDir}`, 500);
     return;
   }
 
@@ -87,7 +94,7 @@ router.get('/', async (req, res) => {
     if (filename === MANIFEST_FILENAME) continue;
     if (!isImageFile(filename)) continue;
 
-    const image = buildFolderImage(filename, dir);
+    const image = buildFolderImage(filename, resolvedDir);
 
     if (excludedSet.has(filename)) {
       excluded.push(image);
@@ -105,7 +112,7 @@ router.get('/', async (req, res) => {
   });
 
   const response: FolderResponse = {
-    dir,
+    dir: resolvedDir,
     sorted,
     unsorted,
     excluded,
