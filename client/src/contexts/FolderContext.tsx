@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import type { FolderImage } from '@appystack/shared';
 import { fetchFolder } from '../utils/api.js';
 
@@ -32,6 +32,7 @@ const FolderContext = createContext<FolderContextValue | null>(null);
 export function FolderProvider({ children }: { children: ReactNode }) {
   const [dir, setDir] = useState<string | null>(null);
   const [sorted, setSorted] = useState<FolderImage[]>([]);
+  const sortedRef = useRef<FolderImage[]>([]);
   const [unsorted, setUnsorted] = useState<FolderImage[]>([]);
   const [excluded, setExcluded] = useState<FolderImage[]>([]);
   const [selected, setSelected] = useState<FolderImage | null>(null);
@@ -45,6 +46,7 @@ export function FolderProvider({ children }: { children: ReactNode }) {
       const data = await fetchFolder(path);
       setDir(data.dir);
       setSorted(data.sorted);
+      sortedRef.current = data.sorted;
       setUnsorted(data.unsorted);
       setExcluded(data.excluded);
       setSelected(null);
@@ -57,28 +59,38 @@ export function FolderProvider({ children }: { children: ReactNode }) {
 
   const reload = useCallback(async () => {
     if (!dir) return;
+    const previousFilename = selected?.filename ?? null;
     await loadFolder(dir);
-  }, [dir, loadFolder]);
-
-  const select = useCallback((image: FolderImage | null) => {
-    setSelected(image);
-    // Fire-and-forget: update lastViewed in the manifest (best effort)
-    if (image) {
-      // We import lazily inside the callback to avoid circular deps at module level
-      import('../utils/api.js')
-        .then(({ fetchManifest, saveManifest }) => {
-          if (!dir) return;
-          fetchManifest(dir)
-            .then((manifest) => saveManifest(dir, { ...manifest, lastViewed: image.filename }))
-            .catch(() => {
-              // silently ignore — this is best-effort
-            });
-        })
-        .catch(() => {
-          // silently ignore
-        });
+    if (previousFilename !== null) {
+      // loadFolder resets selected to null; restore the selection from the refreshed list.
+      // sortedRef.current holds the updated list synchronously after loadFolder resolves.
+      const match = sortedRef.current.find((img) => img.filename === previousFilename) ?? null;
+      setSelected(match);
     }
-  }, [dir]);
+  }, [dir, selected, loadFolder]);
+
+  const select = useCallback(
+    (image: FolderImage | null) => {
+      setSelected(image);
+      // Fire-and-forget: update lastViewed in the manifest (best effort)
+      if (image) {
+        // We import lazily inside the callback to avoid circular deps at module level
+        import('../utils/api.js')
+          .then(({ fetchManifest, saveManifest }) => {
+            if (!dir) return;
+            fetchManifest(dir)
+              .then((manifest) => saveManifest(dir, { ...manifest, lastViewed: image.filename }))
+              .catch(() => {
+                // silently ignore — this is best-effort
+              });
+          })
+          .catch(() => {
+            // silently ignore
+          });
+      }
+    },
+    [dir]
+  );
 
   const value: FolderContextValue = {
     dir,

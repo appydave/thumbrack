@@ -159,12 +159,85 @@ describe('FolderContext — reload', () => {
 
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it('preserves the selected image after reload', async () => {
+    const response = makeFolderResponse();
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify(envelope(response)), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(envelope(response)), { status: 200 }));
+
+    const { result } = renderHook(() => useFolderContext(), { wrapper });
+
+    // Load the folder and select an image
+    await act(async () => {
+      await result.current.loadFolder('/some/folder');
+    });
+
+    act(() => {
+      result.current.select(result.current.sorted[0]);
+    });
+
+    expect(result.current.selected?.filename).toBe('01-hero.png');
+
+    // Simulate what happens after drag-and-drop reorder
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    // Selection should be restored from the refreshed list
+    expect(result.current.selected).not.toBeNull();
+    expect(result.current.selected?.filename).toBe('01-hero.png');
+  });
+
+  it('clears selected to null after reload when the file no longer exists', async () => {
+    const initialResponse = makeFolderResponse();
+    // After reload, the previously selected file is gone
+    const reloadedResponse = makeFolderResponse({
+      sorted: [
+        {
+          filename: '02-new.png',
+          path: '/some/folder/02-new.png',
+          number: 2,
+          label: 'new.png',
+          encodedPath: 'L3NvbWUvZm9sZGVyLzAyLW5ldy5wbmc=',
+        },
+      ],
+    });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope(initialResponse)), { status: 200 })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope(reloadedResponse)), { status: 200 })
+      );
+
+    const { result } = renderHook(() => useFolderContext(), { wrapper });
+
+    await act(async () => {
+      await result.current.loadFolder('/some/folder');
+    });
+
+    act(() => {
+      result.current.select(result.current.sorted[0]);
+    });
+
+    expect(result.current.selected?.filename).toBe('01-hero.png');
+
+    // Reload returns a list that no longer contains '01-hero.png'
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(result.current.selected).toBeNull();
+  });
 });
 
 describe('FolderContext — select', () => {
   it('sets the selected image', async () => {
     const response = makeFolderResponse();
-    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(envelope(response)), { status: 200 }));
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify(envelope(response)), { status: 200 })
+    );
 
     const { result } = renderHook(() => useFolderContext(), { wrapper });
 
@@ -183,7 +256,9 @@ describe('FolderContext — select', () => {
 
   it('clears the selected image when null is passed', async () => {
     const response = makeFolderResponse();
-    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(envelope(response)), { status: 200 }));
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify(envelope(response)), { status: 200 })
+    );
 
     const { result } = renderHook(() => useFolderContext(), { wrapper });
 
