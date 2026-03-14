@@ -7,13 +7,7 @@ import { ToastContainer } from './ToastContainer.js';
 // Helper
 // ---------------------------------------------------------------------------
 
-function ToastTrigger({
-  message,
-  type,
-}: {
-  message: string;
-  type?: 'success' | 'error' | 'info';
-}) {
+function ToastTrigger({ message, type }: { message: string; type?: 'success' | 'error' | 'info' }) {
   const { addToast } = useToast();
   return <button onClick={() => addToast(message, type)}>Add Toast</button>;
 }
@@ -63,7 +57,7 @@ describe('ToastContainer — rendering', () => {
     });
 
     const toastEl = screen.getByText('Done!');
-    expect(toastEl.className).toContain('bg-green-600');
+    expect(toastEl.className).toContain('success');
   });
 
   it('applies red background class for error toasts', async () => {
@@ -74,7 +68,7 @@ describe('ToastContainer — rendering', () => {
     });
 
     const toastEl = screen.getByText('Oops!');
-    expect(toastEl.className).toContain('bg-red-600');
+    expect(toastEl.className).toContain('error');
   });
 
   it('applies slate background class for info toasts', async () => {
@@ -85,7 +79,7 @@ describe('ToastContainer — rendering', () => {
     });
 
     const toastEl = screen.getByText('FYI');
-    expect(toastEl.className).toContain('bg-slate-600');
+    expect(toastEl.className).toContain('info');
   });
 
   it('auto-dismisses the toast after 3000ms', async () => {

@@ -40,13 +40,13 @@ describe('ContextMenu — rendering', () => {
   it('renders danger items in red', () => {
     render(<ContextMenu {...defaultProps} />);
     const dangerItem = screen.getByText('Item Two');
-    expect(dangerItem.className).toContain('text-red-600');
+    expect(dangerItem.className).toContain('danger');
   });
 
   it('renders non-danger items in normal color', () => {
     render(<ContextMenu {...defaultProps} />);
     const normalItem = screen.getByText('Item One');
-    expect(normalItem.className).not.toContain('text-red-600');
+    expect(normalItem.className).not.toContain('danger');
   });
 
   it('renders with role="menu"', () => {
@@ -64,14 +64,7 @@ describe('ContextMenu — rendering', () => {
 describe('ContextMenu — item click', () => {
   it('calls the item onClick when an item is clicked', () => {
     const onClick = vi.fn();
-    render(
-      <ContextMenu
-        x={0}
-        y={0}
-        items={[{ label: 'Click me', onClick }]}
-        onClose={vi.fn()}
-      />
-    );
+    render(<ContextMenu x={0} y={0} items={[{ label: 'Click me', onClick }]} onClose={vi.fn()} />);
     fireEvent.click(screen.getByText('Click me'));
     expect(onClick).toHaveBeenCalledOnce();
   });

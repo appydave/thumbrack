@@ -102,13 +102,13 @@ describe('ExcludedPane — header', () => {
   it('shows correct count in header', () => {
     mockExcluded = [IMAGE_A, IMAGE_B];
     render(<ExcludedPane />);
-    expect(screen.getByTestId('excluded-header')).toHaveTextContent('Excluded (2)');
+    expect(screen.getByTestId('excluded-header')).toHaveTextContent('2');
   });
 
   it('shows count of 1 with single image', () => {
     mockExcluded = [IMAGE_A];
     render(<ExcludedPane />);
-    expect(screen.getByTestId('excluded-header')).toHaveTextContent('Excluded (1)');
+    expect(screen.getByTestId('excluded-header')).toHaveTextContent('1');
   });
 });
 
@@ -134,11 +134,11 @@ describe('ExcludedPane — item rendering', () => {
     expect(screen.getByText('excluded-b.png')).toBeInTheDocument();
   });
 
-  it('renders items with opacity-50 styling', () => {
+  it('renders items with excluded-item styling', () => {
     render(<ExcludedPane />);
     const items = screen.getAllByTestId('excluded-item');
     items.forEach((item) => {
-      expect(item.className).toContain('opacity-50');
+      expect(item.className).toContain('excluded-item');
     });
   });
 

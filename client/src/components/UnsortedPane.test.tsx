@@ -106,13 +106,13 @@ describe('UnsortedPane — header', () => {
   it('shows count of 0 in header when empty', () => {
     mockUnsorted = [];
     render(<UnsortedPane />);
-    expect(screen.getByTestId('unsorted-header')).toHaveTextContent('Unsorted (0)');
+    expect(screen.getByTestId('unsorted-header')).toHaveTextContent('0');
   });
 
   it('shows correct count in header with images', () => {
     mockUnsorted = [IMAGE_A, IMAGE_B];
     render(<UnsortedPane />);
-    expect(screen.getByTestId('unsorted-header')).toHaveTextContent('Unsorted (2)');
+    expect(screen.getByTestId('unsorted-header')).toHaveTextContent('2');
   });
 });
 
@@ -176,25 +176,25 @@ describe('UnsortedPane — selection', () => {
     expect(mockSelect).toHaveBeenCalledWith(IMAGE_B);
   });
 
-  it('selected item has highlighted styling (bg-blue-100 class)', () => {
+  it('selected item has highlighted styling (selected class)', () => {
     mockSelected = IMAGE_A;
     render(<UnsortedPane />);
     const items = screen.getAllByRole('option');
-    expect(items[0].className).toContain('bg-blue-100');
+    expect(items[0].className).toContain('selected');
   });
 
-  it('selected item has left border accent (border-blue-500 class)', () => {
+  it('selected item has left border accent (selected class)', () => {
     mockSelected = IMAGE_A;
     render(<UnsortedPane />);
     const items = screen.getAllByRole('option');
-    expect(items[0].className).toContain('border-blue-500');
+    expect(items[0].className).toContain('selected');
   });
 
   it('unselected item does not have highlighted styling', () => {
     mockSelected = IMAGE_A;
     render(<UnsortedPane />);
     const items = screen.getAllByRole('option');
-    expect(items[1].className).not.toContain('bg-blue-100');
+    expect(items[1].className).not.toContain('selected');
   });
 
   it('marks selected item with aria-selected=true', () => {

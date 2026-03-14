@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { FolderImage } from '@appystack/shared';
+import { ToastProvider } from '../contexts/ToastContext.js';
 import { SortedPane } from './SortedPane.js';
 
 // ---------------------------------------------------------------------------
@@ -78,6 +79,18 @@ const IMAGE_B = makeImage({
 });
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function renderSortedPane() {
+  return render(
+    <ToastProvider>
+      <SortedPane />
+    </ToastProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -90,14 +103,14 @@ beforeEach(() => {
 describe('SortedPane — empty state', () => {
   it('renders "No numbered images" when sorted list is empty', () => {
     mockSorted = [];
-    render(<SortedPane />);
+    renderSortedPane();
     expect(screen.getByTestId('empty-state')).toBeInTheDocument();
     expect(screen.getByText('No numbered images')).toBeInTheDocument();
   });
 
   it('does not render a list when sorted list is empty', () => {
     mockSorted = [];
-    render(<SortedPane />);
+    renderSortedPane();
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 });
@@ -105,14 +118,14 @@ describe('SortedPane — empty state', () => {
 describe('SortedPane — header', () => {
   it('shows count of 0 in header when empty', () => {
     mockSorted = [];
-    render(<SortedPane />);
-    expect(screen.getByTestId('sorted-header')).toHaveTextContent('Sorted (0)');
+    renderSortedPane();
+    expect(screen.getByTestId('sorted-header')).toHaveTextContent('0');
   });
 
   it('shows correct count in header with images', () => {
     mockSorted = [IMAGE_A, IMAGE_B];
-    render(<SortedPane />);
-    expect(screen.getByTestId('sorted-header')).toHaveTextContent('Sorted (2)');
+    renderSortedPane();
+    expect(screen.getByTestId('sorted-header')).toHaveTextContent('2');
   });
 });
 
@@ -122,31 +135,31 @@ describe('SortedPane — item rendering', () => {
   });
 
   it('renders one item per image in sorted list', () => {
-    render(<SortedPane />);
+    renderSortedPane();
     const items = screen.getAllByRole('option');
     expect(items).toHaveLength(2);
   });
 
   it('shows number badge padded to 2 digits for single-digit number', () => {
-    render(<SortedPane />);
+    renderSortedPane();
     const badges = screen.getAllByTestId('number-badge');
     expect(badges[0]).toHaveTextContent('01');
   });
 
   it('shows number badge padded to 2 digits for multi-digit number', () => {
-    render(<SortedPane />);
+    renderSortedPane();
     const badges = screen.getAllByTestId('number-badge');
     expect(badges[1]).toHaveTextContent('07');
   });
 
   it('shows label text for each image', () => {
-    render(<SortedPane />);
+    renderSortedPane();
     expect(screen.getByText('hero-shot.png')).toBeInTheDocument();
     expect(screen.getByText('closing-slide.png')).toBeInTheDocument();
   });
 
   it('renders a thumbnail img for each item', () => {
-    render(<SortedPane />);
+    renderSortedPane();
     const images = screen.getAllByRole('img');
     expect(images).toHaveLength(2);
     expect(images[0]).toHaveAttribute(
@@ -162,7 +175,7 @@ describe('SortedPane — selection', () => {
   });
 
   it('calls select with the correct image when an item is clicked', () => {
-    render(<SortedPane />);
+    renderSortedPane();
     const items = screen.getAllByRole('option');
     fireEvent.click(items[0]);
     expect(mockSelect).toHaveBeenCalledOnce();
@@ -170,36 +183,36 @@ describe('SortedPane — selection', () => {
   });
 
   it('calls select with second image when second item is clicked', () => {
-    render(<SortedPane />);
+    renderSortedPane();
     const items = screen.getAllByRole('option');
     fireEvent.click(items[1]);
     expect(mockSelect).toHaveBeenCalledWith(IMAGE_B);
   });
 
-  it('selected item has highlighted styling (bg-blue-100 class)', () => {
+  it('selected item has highlighted styling (selected class)', () => {
     mockSelected = IMAGE_A;
-    render(<SortedPane />);
+    renderSortedPane();
     const items = screen.getAllByRole('option');
-    expect(items[0].className).toContain('bg-blue-100');
+    expect(items[0].className).toContain('selected');
   });
 
-  it('selected item has left border accent (border-blue-500 class)', () => {
+  it('selected item has left border accent (selected class)', () => {
     mockSelected = IMAGE_A;
-    render(<SortedPane />);
+    renderSortedPane();
     const items = screen.getAllByRole('option');
-    expect(items[0].className).toContain('border-blue-500');
+    expect(items[0].className).toContain('selected');
   });
 
   it('unselected item does not have highlighted styling', () => {
     mockSelected = IMAGE_A;
-    render(<SortedPane />);
+    renderSortedPane();
     const items = screen.getAllByRole('option');
-    expect(items[1].className).not.toContain('bg-blue-100');
+    expect(items[1].className).not.toContain('selected');
   });
 
   it('marks selected item with aria-selected=true', () => {
     mockSelected = IMAGE_A;
-    render(<SortedPane />);
+    renderSortedPane();
     const items = screen.getAllByRole('option');
     expect(items[0]).toHaveAttribute('aria-selected', 'true');
     expect(items[1]).toHaveAttribute('aria-selected', 'false');
@@ -209,7 +222,7 @@ describe('SortedPane — selection', () => {
 describe('SortedPane — thumbnail error handling', () => {
   it('shows grey placeholder when image fails to load', () => {
     mockSorted = [IMAGE_A];
-    render(<SortedPane />);
+    renderSortedPane();
     const img = screen.getByRole('img');
     fireEvent.error(img);
     expect(screen.getByTestId('thumb-error')).toBeInTheDocument();

@@ -1,11 +1,21 @@
 # Project Backlog — ThumbRack
 
-**Last updated**: 2026-03-08
-**Total**: 18 | Pending: 1 | In Progress: 0 | Done: 17 | Deferred: 0 | Rejected: 0
+**Last updated**: 2026-03-13
+**Total**: 28 | Pending: 11 | In Progress: 0 | Done: 17 | Deferred: 0 | Rejected: 0
 
 ## Pending
 
 - [ ] B014 — Undo last rename operation | Priority: low
+- [ ] B019 — Fix 27 pre-existing client test failures (CSS class assertions) | Priority: high
+- [ ] B020 — Extract readStorage/writeStorage to shared client utility | Priority: medium
+- [ ] B021 — Remove duplicate imageUrl from PreviewPane.tsx (import from api.ts) | Priority: medium
+- [ ] B022 — Delete dead AppContext scaffold (AppContext.tsx + AppContext.test.tsx) | Priority: medium
+- [ ] B023 — Add error handling + tests to useExclusion (silent failures on network error) | Priority: medium
+- [ ] B024 — Add server tests for rename collision path (lines 61–72 rename.ts) | Priority: high
+- [ ] B025 — Fix drag source opacity (dragged item appears black on dark background) | Priority: high
+- [ ] B026 — Fix: drag-end clears selected image (reload resets selected to null) | Priority: high
+- [ ] B027 — Full-card draggable in sorted pane (not just drag handle icon) | Priority: medium
+- [ ] B028 — Divider/boundary feature (visual group separators in sorted pane) | Priority: high
 
 ## In Progress
 

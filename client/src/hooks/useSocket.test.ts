@@ -6,7 +6,8 @@ import type { AddressInfo } from 'node:net';
 import { Server as SocketServer } from 'socket.io';
 import type { ServerToClientEvents, ClientToServerEvents } from '@appystack/shared';
 import { SOCKET_EVENTS } from '@appystack/shared';
-import { useSocket, getSocketUrl } from './useSocket.js';
+import { useSocket } from './useSocket.js';
+import { getSocketUrl } from '../lib/entitySocket.js';
 
 let httpServer: HttpServer;
 let io: SocketServer<ClientToServerEvents, ServerToClientEvents>;
