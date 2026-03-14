@@ -67,6 +67,7 @@ router.post('/', async (req, res) => {
   const manifest: ManifestData = {
     excluded: data['excluded'] as string[],
     lastViewed: typeof data['lastViewed'] === 'string' ? data['lastViewed'] : null,
+    groupBoundaries: isStringArray(data['groupBoundaries']) ? data['groupBoundaries'] : [],
   };
 
   await writeManifest(dir, manifest);

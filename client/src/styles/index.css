@@ -662,7 +662,10 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
   line-height: 1;
 }
 
@@ -678,8 +681,42 @@ body {
 }
 
 /* S-mode: suppress filenames so the sidebar becomes a true filmstrip */
-[data-sidebar-size="S"] .img-label {
+[data-sidebar-size='S'] .img-label {
   display: none;
+}
+
+/* ── Group dividers ────────────────────────────────────────────────────────── */
+
+.group-divider {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  margin: 2px 0;
+}
+
+.group-divider__line {
+  flex: 1;
+  height: 1px;
+  background: var(--amber-dim);
+  opacity: 0.6;
+}
+
+.group-divider__remove {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--amber-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.group-divider__remove:hover {
+  opacity: 1;
+  color: var(--amber);
 }
 
 /* ── DragOverlay card ──────────────────────────────────────────────────────── */
@@ -716,7 +753,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .btn-kebab:hover {
@@ -735,8 +774,8 @@ body {
   padding: 4px;
   min-width: 200px;
   box-shadow:
-    0 8px 24px rgba(0,0,0,0.4),
-    0 2px 8px rgba(0,0,0,0.3);
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .kebab-menu-item {

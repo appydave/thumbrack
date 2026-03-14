@@ -104,6 +104,22 @@ describe('POST /api/manifest', () => {
     const raw = await readFile(join(tmpDir, '.thumbrack.json'), 'utf-8');
     expect(JSON.parse(raw)).toEqual(manifest);
   });
+
+  it('persists groupBoundaries to disk (AP-8 fix)', async () => {
+    const manifest = {
+      excluded: [],
+      lastViewed: null,
+      groupBoundaries: ['03-foo.png', '07-bar.png'],
+    };
+    const res = await request(buildApp())
+      .post(`/api/manifest?dir=${encodeURIComponent(tmpDir)}`)
+      .send(manifest);
+    expect(res.status).toBe(200);
+
+    const { readFile } = await import('node:fs/promises');
+    const raw = await readFile(join(tmpDir, '.thumbrack.json'), 'utf-8');
+    expect(JSON.parse(raw)).toEqual(manifest);
+  });
 });
 
 // ──────────────────────────────────────────────

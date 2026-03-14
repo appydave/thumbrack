@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { FolderImage } from '@appystack/shared';
 import { DndContext, closestCenter, DragOverlay, type DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -11,7 +11,9 @@ import { useManualEntry } from '../hooks/useManualEntry.js';
 import { useKeyboardNav } from '../hooks/useKeyboardNav.js';
 import { useContextMenu } from '../hooks/useContextMenu.js';
 import { useExclusion } from '../hooks/useExclusion.js';
+import { useDividers } from '../hooks/useDividers.js';
 import { ContextMenu } from './ContextMenu.js';
+import { GroupDivider } from './GroupDivider.js';
 
 // ---------------------------------------------------------------------------
 // SortableItem
@@ -188,11 +190,12 @@ function DragOverlayItem({ image }: { image: FolderImage }) {
 // ---------------------------------------------------------------------------
 
 export function SortedPane() {
-  const { sorted, unsorted, selected, select, dir, reload } = useFolderContext();
+  const { sorted, unsorted, selected, select, dir, reload, groupBoundaries } = useFolderContext();
   const { addToast } = useToast();
   const [localActiveId, setLocalActiveId] = useState<string | null>(null);
   const { menu, openMenu, closeMenu } = useContextMenu();
   const { exclude } = useExclusion(dir, reload);
+  const { addDivider, removeDivider } = useDividers();
   const { editingFilename, editValue, setEditValue, startEdit, confirmEdit, cancelEdit } =
     useManualEntry(dir, reload, sorted, (msg) => addToast(msg, 'error'));
 
@@ -251,24 +254,32 @@ export function SortedPane() {
               style={{ margin: 0, padding: 0, listStyle: 'none' }}
             >
               {sorted.map((image) => (
-                <SortableItem
-                  key={image.encodedPath}
-                  image={image}
-                  isSelected={selected?.encodedPath === image.encodedPath}
-                  onSelect={() => select(image)}
-                  isOver={overId === image.filename && localActiveId !== image.filename}
-                  onContextMenu={(e) => openMenu(e, image)}
-                  isEditing={editingFilename === image.filename}
-                  editValue={editValue}
-                  onEditValueChange={setEditValue}
-                  onBadgeClick={() => {
-                    if (image.number !== null) {
-                      startEdit(image.filename, image.number);
-                    }
-                  }}
-                  onConfirm={confirmEdit}
-                  onCancel={cancelEdit}
-                />
+                <React.Fragment key={image.encodedPath}>
+                  {groupBoundaries.includes(image.filename) && (
+                    <GroupDivider
+                      onRemove={() => {
+                        void removeDivider(image.filename);
+                      }}
+                    />
+                  )}
+                  <SortableItem
+                    image={image}
+                    isSelected={selected?.encodedPath === image.encodedPath}
+                    onSelect={() => select(image)}
+                    isOver={overId === image.filename && localActiveId !== image.filename}
+                    onContextMenu={(e) => openMenu(e, image)}
+                    isEditing={editingFilename === image.filename}
+                    editValue={editValue}
+                    onEditValueChange={setEditValue}
+                    onBadgeClick={() => {
+                      if (image.number !== null) {
+                        startEdit(image.filename, image.number);
+                      }
+                    }}
+                    onConfirm={confirmEdit}
+                    onCancel={cancelEdit}
+                  />
+                </React.Fragment>
               ))}
             </ul>
           </SortableContext>
@@ -282,6 +293,19 @@ export function SortedPane() {
           x={menu.x}
           y={menu.y}
           items={[
+            groupBoundaries.includes(menu.image.filename)
+              ? {
+                  label: 'Remove divider',
+                  onClick: () => {
+                    void removeDivider(menu.image.filename);
+                  },
+                }
+              : {
+                  label: 'Add divider before this',
+                  onClick: () => {
+                    void addDivider(menu.image.filename);
+                  },
+                },
             {
               label: 'Exclude this image',
               onClick: () => {

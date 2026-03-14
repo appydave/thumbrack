@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import type { FolderImage } from '@appystack/shared';
-import { fetchFolder } from '../utils/api.js';
+import { fetchFolder, fetchManifest } from '../utils/api.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,6 +11,7 @@ export interface FolderContextValue {
   sorted: FolderImage[];
   unsorted: FolderImage[];
   excluded: FolderImage[];
+  groupBoundaries: string[];
   selected: FolderImage | null;
   loading: boolean;
   error: string | null;
@@ -35,6 +36,7 @@ export function FolderProvider({ children }: { children: ReactNode }) {
   const sortedRef = useRef<FolderImage[]>([]);
   const [unsorted, setUnsorted] = useState<FolderImage[]>([]);
   const [excluded, setExcluded] = useState<FolderImage[]>([]);
+  const [groupBoundaries, setGroupBoundaries] = useState<string[]>([]);
   const [selected, setSelected] = useState<FolderImage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +52,13 @@ export function FolderProvider({ children }: { children: ReactNode }) {
       setUnsorted(data.unsorted);
       setExcluded(data.excluded);
       setSelected(null);
+      // Load groupBoundaries from manifest (best-effort)
+      try {
+        const manifest = await fetchManifest(data.dir);
+        setGroupBoundaries(manifest.groupBoundaries ?? []);
+      } catch {
+        setGroupBoundaries([]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -97,6 +106,7 @@ export function FolderProvider({ children }: { children: ReactNode }) {
     sorted,
     unsorted,
     excluded,
+    groupBoundaries,
     selected,
     loading,
     error,

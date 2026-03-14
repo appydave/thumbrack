@@ -10,12 +10,14 @@ import { SortedPane } from './SortedPane.js';
 const mockSelect = vi.fn();
 let mockSorted: FolderImage[] = [];
 let mockSelected: FolderImage | null = null;
+let mockGroupBoundaries: string[] = [];
 
 vi.mock('../contexts/FolderContext.js', () => ({
   useFolderContext: () => ({
     sorted: mockSorted,
     unsorted: [],
     excluded: [],
+    groupBoundaries: mockGroupBoundaries,
     selected: mockSelected,
     loading: false,
     error: null,
@@ -23,6 +25,13 @@ vi.mock('../contexts/FolderContext.js', () => ({
     select: mockSelect,
     loadFolder: vi.fn(),
     reload: vi.fn(),
+  }),
+}));
+
+vi.mock('../hooks/useDividers.js', () => ({
+  useDividers: () => ({
+    addDivider: vi.fn(),
+    removeDivider: vi.fn(),
   }),
 }));
 
@@ -97,6 +106,7 @@ beforeEach(() => {
   mockSelect.mockReset();
   mockSorted = [];
   mockSelected = null;
+  mockGroupBoundaries = [];
 });
 
 describe('SortedPane — empty state', () => {
@@ -226,5 +236,21 @@ describe('SortedPane — thumbnail error handling', () => {
     fireEvent.error(img);
     expect(screen.getByTestId('thumb-error')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+});
+
+describe('SortedPane — group dividers', () => {
+  it('renders a GroupDivider before an item whose filename is in groupBoundaries', () => {
+    mockSorted = [IMAGE_A, IMAGE_B];
+    mockGroupBoundaries = [IMAGE_B.filename];
+    render(<SortedPane />);
+    expect(screen.getByRole('separator')).toBeInTheDocument();
+  });
+
+  it('does not render any GroupDivider when groupBoundaries is empty', () => {
+    mockSorted = [IMAGE_A, IMAGE_B];
+    mockGroupBoundaries = [];
+    render(<SortedPane />);
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument();
   });
 });
