@@ -29,6 +29,10 @@ vi.mock('../contexts/FolderContext.js', () => ({
   }),
 }));
 
+vi.mock('../contexts/ToastContext.js', () => ({
+  useToast: () => ({ addToast: vi.fn() }),
+}));
+
 vi.mock('../utils/api.js', () => ({
   imageUrl: (encodedPath: string) => `http://localhost:5021/api/images/${encodedPath}`,
   fetchManifest: (...args: unknown[]) => mockFetchManifest(...args),
