@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { FolderImage } from '@appystack/shared';
-import { ToastProvider } from '../contexts/ToastContext.js';
 import { SortedPane } from './SortedPane.js';
 
 // ---------------------------------------------------------------------------
@@ -87,11 +86,7 @@ const IMAGE_B = makeImage({
 // ---------------------------------------------------------------------------
 
 function renderSortedPane() {
-  return render(
-    <ToastProvider>
-      <SortedPane />
-    </ToastProvider>
-  );
+  return render(<SortedPane />);
 }
 
 // ---------------------------------------------------------------------------
