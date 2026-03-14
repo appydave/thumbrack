@@ -17,26 +17,30 @@ afterEach(async () => {
 describe('readManifest', () => {
   it('returns empty manifest when file does not exist', async () => {
     const manifest = await readManifest(tmpDir);
-    expect(manifest).toEqual({ excluded: [], lastViewed: null });
+    expect(manifest).toEqual({ excluded: [], lastViewed: null, groupBoundaries: [] });
   });
 
   it('returns manifest when file exists', async () => {
     const data = { excluded: ['a.png', 'b.jpg'], lastViewed: 'c.jpeg' };
     await writeFile(join(tmpDir, '.thumbrack.json'), JSON.stringify(data), 'utf-8');
     const manifest = await readManifest(tmpDir);
-    expect(manifest).toEqual(data);
+    expect(manifest).toEqual({ ...data, groupBoundaries: [] });
   });
 
   it('returns empty manifest when JSON is malformed', async () => {
     await writeFile(join(tmpDir, '.thumbrack.json'), '{ not valid json }', 'utf-8');
     const manifest = await readManifest(tmpDir);
-    expect(manifest).toEqual({ excluded: [], lastViewed: null });
+    expect(manifest).toEqual({ excluded: [], lastViewed: null, groupBoundaries: [] });
   });
 
   it('returns empty manifest when JSON lacks excluded array', async () => {
-    await writeFile(join(tmpDir, '.thumbrack.json'), JSON.stringify({ lastViewed: 'x.png' }), 'utf-8');
+    await writeFile(
+      join(tmpDir, '.thumbrack.json'),
+      JSON.stringify({ lastViewed: 'x.png' }),
+      'utf-8'
+    );
     const manifest = await readManifest(tmpDir);
-    expect(manifest).toEqual({ excluded: [], lastViewed: null });
+    expect(manifest).toEqual({ excluded: [], lastViewed: null, groupBoundaries: [] });
   });
 
   it('coerces lastViewed to null when not a string', async () => {
@@ -57,15 +61,15 @@ describe('writeManifest', () => {
   });
 
   it('round-trips correctly through readManifest', async () => {
-    const data = { excluded: ['x.png', 'y.jpg'], lastViewed: 'z.jpeg' };
+    const data = { excluded: ['x.png', 'y.jpg'], lastViewed: 'z.jpeg', groupBoundaries: ['a.png'] };
     await writeManifest(tmpDir, data);
     const result = await readManifest(tmpDir);
     expect(result).toEqual(data);
   });
 
   it('writes empty manifest correctly', async () => {
-    await writeManifest(tmpDir, { excluded: [], lastViewed: null });
+    await writeManifest(tmpDir, { excluded: [], lastViewed: null, groupBoundaries: [] });
     const result = await readManifest(tmpDir);
-    expect(result).toEqual({ excluded: [], lastViewed: null });
+    expect(result).toEqual({ excluded: [], lastViewed: null, groupBoundaries: [] });
   });
 });

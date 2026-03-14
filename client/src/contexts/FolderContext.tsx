@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import type { FolderImage } from '@appystack/shared';
-import { fetchFolder } from '../utils/api.js';
+import { fetchFolder, fetchManifest } from '../utils/api.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,6 +11,7 @@ export interface FolderContextValue {
   sorted: FolderImage[];
   unsorted: FolderImage[];
   excluded: FolderImage[];
+  groupBoundaries: string[];
   selected: FolderImage | null;
   loading: boolean;
   error: string | null;
@@ -34,6 +35,7 @@ export function FolderProvider({ children }: { children: ReactNode }) {
   const [sorted, setSorted] = useState<FolderImage[]>([]);
   const [unsorted, setUnsorted] = useState<FolderImage[]>([]);
   const [excluded, setExcluded] = useState<FolderImage[]>([]);
+  const [groupBoundaries, setGroupBoundaries] = useState<string[]>([]);
   const [selected, setSelected] = useState<FolderImage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +50,13 @@ export function FolderProvider({ children }: { children: ReactNode }) {
       setUnsorted(data.unsorted);
       setExcluded(data.excluded);
       setSelected(null);
+      // Load groupBoundaries from manifest (best-effort)
+      try {
+        const manifest = await fetchManifest(data.dir);
+        setGroupBoundaries(manifest.groupBoundaries ?? []);
+      } catch {
+        setGroupBoundaries([]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -60,31 +69,35 @@ export function FolderProvider({ children }: { children: ReactNode }) {
     await loadFolder(dir);
   }, [dir, loadFolder]);
 
-  const select = useCallback((image: FolderImage | null) => {
-    setSelected(image);
-    // Fire-and-forget: update lastViewed in the manifest (best effort)
-    if (image) {
-      // We import lazily inside the callback to avoid circular deps at module level
-      import('../utils/api.js')
-        .then(({ fetchManifest, saveManifest }) => {
-          if (!dir) return;
-          fetchManifest(dir)
-            .then((manifest) => saveManifest(dir, { ...manifest, lastViewed: image.filename }))
-            .catch(() => {
-              // silently ignore — this is best-effort
-            });
-        })
-        .catch(() => {
-          // silently ignore
-        });
-    }
-  }, [dir]);
+  const select = useCallback(
+    (image: FolderImage | null) => {
+      setSelected(image);
+      // Fire-and-forget: update lastViewed in the manifest (best effort)
+      if (image) {
+        // We import lazily inside the callback to avoid circular deps at module level
+        import('../utils/api.js')
+          .then(({ fetchManifest, saveManifest }) => {
+            if (!dir) return;
+            fetchManifest(dir)
+              .then((manifest) => saveManifest(dir, { ...manifest, lastViewed: image.filename }))
+              .catch(() => {
+                // silently ignore — this is best-effort
+              });
+          })
+          .catch(() => {
+            // silently ignore
+          });
+      }
+    },
+    [dir]
+  );
 
   const value: FolderContextValue = {
     dir,
     sorted,
     unsorted,
     excluded,
+    groupBoundaries,
     selected,
     loading,
     error,

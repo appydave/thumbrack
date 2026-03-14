@@ -125,10 +125,18 @@ describe('FolderContext — reload', () => {
 
   it('re-fetches with the current dir', async () => {
     const response = makeFolderResponse();
-    // first load + reload = 2 successful responses
+    const manifestResponse = { excluded: [], lastViewed: null, groupBoundaries: [] };
+    // Each loadFolder call makes 2 fetches: folder + manifest.
+    // first load (folder + manifest) + reload (folder + manifest) = 4 responses
     vi.mocked(fetch)
       .mockResolvedValueOnce(new Response(JSON.stringify(envelope(response)), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(envelope(response)), { status: 200 }));
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope(manifestResponse)), { status: 200 })
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify(envelope(response)), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope(manifestResponse)), { status: 200 })
+      );
 
     const { result } = renderHook(() => useFolderContext(), { wrapper });
 
@@ -136,18 +144,20 @@ describe('FolderContext — reload', () => {
       await result.current.loadFolder('/some/folder');
     });
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    // folder fetch + manifest fetch
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     await act(async () => {
       await result.current.reload();
     });
 
-    expect(fetch).toHaveBeenCalledTimes(2);
-    // Both calls should reference the same folder path
+    // 2 more fetches on reload
+    expect(fetch).toHaveBeenCalledTimes(4);
+    // Both folder calls should reference the same folder path
     const [firstUrl] = vi.mocked(fetch).mock.calls[0] as [string];
-    const [secondUrl] = vi.mocked(fetch).mock.calls[1] as [string];
+    const [thirdUrl] = vi.mocked(fetch).mock.calls[2] as [string];
     expect(firstUrl).toContain(encodeURIComponent('/some/folder'));
-    expect(secondUrl).toContain(encodeURIComponent('/some/folder'));
+    expect(thirdUrl).toContain(encodeURIComponent('/some/folder'));
   });
 
   it('does nothing when dir is null', async () => {
@@ -164,7 +174,9 @@ describe('FolderContext — reload', () => {
 describe('FolderContext — select', () => {
   it('sets the selected image', async () => {
     const response = makeFolderResponse();
-    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(envelope(response)), { status: 200 }));
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify(envelope(response)), { status: 200 })
+    );
 
     const { result } = renderHook(() => useFolderContext(), { wrapper });
 
@@ -183,7 +195,9 @@ describe('FolderContext — select', () => {
 
   it('clears the selected image when null is passed', async () => {
     const response = makeFolderResponse();
-    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(envelope(response)), { status: 200 }));
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify(envelope(response)), { status: 200 })
+    );
 
     const { result } = renderHook(() => useFolderContext(), { wrapper });
 

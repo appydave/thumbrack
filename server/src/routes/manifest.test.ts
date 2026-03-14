@@ -44,7 +44,7 @@ describe('GET /api/manifest', () => {
     const res = await request(buildApp()).get(`/api/manifest?dir=${encodeURIComponent(tmpDir)}`);
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('ok');
-    expect(res.body.data).toEqual({ excluded: [], lastViewed: null });
+    expect(res.body.data).toEqual({ excluded: [], lastViewed: null, groupBoundaries: [] });
   });
 
   it('returns manifest when .thumbrack.json exists', async () => {
@@ -52,14 +52,14 @@ describe('GET /api/manifest', () => {
     await writeFile(join(tmpDir, '.thumbrack.json'), JSON.stringify(manifest), 'utf-8');
     const res = await request(buildApp()).get(`/api/manifest?dir=${encodeURIComponent(tmpDir)}`);
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual(manifest);
+    expect(res.body.data).toEqual({ ...manifest, groupBoundaries: [] });
   });
 
   it('returns empty manifest when .thumbrack.json has malformed JSON', async () => {
     await writeFile(join(tmpDir, '.thumbrack.json'), '{ broken json }', 'utf-8');
     const res = await request(buildApp()).get(`/api/manifest?dir=${encodeURIComponent(tmpDir)}`);
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ excluded: [], lastViewed: null });
+    expect(res.body.data).toEqual({ excluded: [], lastViewed: null, groupBoundaries: [] });
   });
 });
 
@@ -130,7 +130,7 @@ describe('POST /api/manifest/regenerate', () => {
     await writeFile(join(tmpDir, '.thumbrack.json'), JSON.stringify(staleManifest), 'utf-8');
 
     const res = await request(buildApp()).post(
-      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`,
+      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`
     );
     expect(res.status).toBe(200);
     expect(res.body.data.success).toBe(true);
@@ -143,7 +143,7 @@ describe('POST /api/manifest/regenerate', () => {
     await writeFile(join(tmpDir, '.thumbrack.json'), JSON.stringify(staleManifest), 'utf-8');
 
     const res = await request(buildApp()).post(
-      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`,
+      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`
     );
     expect(res.status).toBe(200);
     expect(res.body.data.manifest.lastViewed).toBeNull();
@@ -155,7 +155,7 @@ describe('POST /api/manifest/regenerate', () => {
     await writeFile(join(tmpDir, '.thumbrack.json'), JSON.stringify(manifest), 'utf-8');
 
     const res = await request(buildApp()).post(
-      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`,
+      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`
     );
     expect(res.status).toBe(200);
     expect(res.body.data.manifest.lastViewed).toBe('keeper.png');
@@ -163,10 +163,11 @@ describe('POST /api/manifest/regenerate', () => {
 
   it('returns empty manifest when no .thumbrack.json exists', async () => {
     const res = await request(buildApp()).post(
-      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`,
+      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`
     );
     expect(res.status).toBe(200);
-    expect(res.body.data.manifest).toEqual({ excluded: [], lastViewed: null });
+    expect(res.body.data.manifest.excluded).toEqual([]);
+    expect(res.body.data.manifest.lastViewed).toBeNull();
   });
 
   it('only considers image files (.png, .jpg, .jpeg) when reconciling', async () => {
@@ -176,7 +177,7 @@ describe('POST /api/manifest/regenerate', () => {
     await writeFile(join(tmpDir, '.thumbrack.json'), JSON.stringify(manifest), 'utf-8');
 
     const res = await request(buildApp()).post(
-      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`,
+      `/api/manifest/regenerate?dir=${encodeURIComponent(tmpDir)}`
     );
     expect(res.status).toBe(200);
     // document.txt is not an image so even though it exists, it should be pruned

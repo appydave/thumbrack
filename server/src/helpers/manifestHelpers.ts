@@ -7,6 +7,7 @@ const MANIFEST_FILENAME = '.thumbrack.json';
 const EMPTY_MANIFEST: ManifestData = {
   excluded: [],
   lastViewed: null,
+  groupBoundaries: [],
 };
 
 export async function readManifest(dir: string): Promise<ManifestData> {
@@ -22,11 +23,11 @@ export async function readManifest(dir: string): Promise<ManifestData> {
     ) {
       const data = parsed as Record<string, unknown>;
       return {
-        excluded: (data.excluded as unknown[]).filter(
-          (e): e is string => typeof e === 'string',
-        ),
-        lastViewed:
-          typeof data.lastViewed === 'string' ? data.lastViewed : null,
+        excluded: (data.excluded as unknown[]).filter((e): e is string => typeof e === 'string'),
+        lastViewed: typeof data.lastViewed === 'string' ? data.lastViewed : null,
+        groupBoundaries: Array.isArray(data.groupBoundaries)
+          ? (data.groupBoundaries as unknown[]).filter((e): e is string => typeof e === 'string')
+          : [],
       };
     }
     return { ...EMPTY_MANIFEST };
