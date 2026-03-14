@@ -1,7 +1,7 @@
 # Project Backlog — ThumbRack
 
-**Last updated**: 2026-03-13
-**Total**: 28 | Pending: 11 | In Progress: 0 | Done: 17 | Deferred: 0 | Rejected: 0
+**Last updated**: 2026-03-14
+**Total**: 28 | Pending: 7 | In Progress: 0 | Done: 21 | Deferred: 0 | Rejected: 0
 
 ## Pending
 
@@ -12,10 +12,6 @@
 - [ ] B022 — Delete dead AppContext scaffold (AppContext.tsx + AppContext.test.tsx) | Priority: medium
 - [ ] B023 — Add error handling + tests to useExclusion (silent failures on network error) | Priority: medium
 - [ ] B024 — Add server tests for rename collision path (lines 61–72 rename.ts) | Priority: high
-- [ ] B025 — Fix drag source opacity (dragged item appears black on dark background) | Priority: high
-- [ ] B026 — Fix: drag-end clears selected image (reload resets selected to null) | Priority: high
-- [ ] B027 — Full-card draggable in sorted pane (not just drag handle icon) | Priority: medium
-- [ ] B028 — Divider/boundary feature (visual group separators in sorted pane) | Priority: high
 
 ## In Progress
 
@@ -38,6 +34,10 @@
 - [x] B016 — Default folder pre-fill (~/Downloads) + recent folders dropdown | Completed: thumbrack-wave2
 - [x] B017 — Regenerate button tooltip + move to kebab/options menu | Completed: thumbrack-wave2
 - [x] B018 — Sidebar drag-to-resize or S/M/L size presets (resolved with B015) | Completed: thumbrack-wave2
+- [x] B025 — Fix drag source opacity (dragged item appears black on dark background) | Completed: thumbrack-wave4
+- [x] B026 — Fix: drag-end clears selected image (reload resets selected to null) | Completed: thumbrack-wave4
+- [x] B027 — Full-card draggable in sorted pane (not just drag handle icon) | Completed: thumbrack-wave4
+- [x] B028 — Divider/boundary feature (visual group separators in sorted pane) | Completed: thumbrack-wave4
 
 ## Deferred
 
