@@ -9,10 +9,15 @@ import { useExclusion } from './useExclusion.js';
 
 const mockFetchManifest = vi.fn();
 const mockSaveManifest = vi.fn();
+const mockAddToast = vi.fn();
 
 vi.mock('../utils/api.js', () => ({
   fetchManifest: (...args: unknown[]) => mockFetchManifest(...args),
   saveManifest: (...args: unknown[]) => mockSaveManifest(...args),
+}));
+
+vi.mock('../contexts/ToastContext.js', () => ({
+  useToast: () => ({ addToast: mockAddToast }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -34,6 +39,7 @@ function makeManifest(overrides: Partial<ManifestData> = {}): ManifestData {
 beforeEach(() => {
   vi.clearAllMocks();
   mockSaveManifest.mockResolvedValue(undefined);
+  mockAddToast.mockReturnValue(undefined);
 });
 
 describe('useExclusion — exclude', () => {
@@ -156,5 +162,99 @@ describe('useExclusion — unexclude', () => {
 
     const savedManifest = mockSaveManifest.mock.calls[0][1] as ManifestData;
     expect(savedManifest.excluded).toEqual(['other.png']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Error path tests
+// ---------------------------------------------------------------------------
+
+describe('useExclusion — exclude error handling', () => {
+  it('calls addToast with error when fetchManifest throws during exclude', async () => {
+    mockFetchManifest.mockRejectedValue(new Error('Network error'));
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useExclusion('/test/dir', reload));
+    await result.current.exclude('image.png');
+
+    expect(mockAddToast).toHaveBeenCalledWith('Failed to exclude image', 'error');
+  });
+
+  it('calls addToast with error when saveManifest throws during exclude', async () => {
+    const manifest = makeManifest();
+    mockFetchManifest.mockResolvedValue(manifest);
+    mockSaveManifest.mockRejectedValue(new Error('Save failed'));
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useExclusion('/test/dir', reload));
+    await result.current.exclude('image.png');
+
+    expect(mockAddToast).toHaveBeenCalledWith('Failed to exclude image', 'error');
+  });
+
+  it('does not call reload when exclude throws', async () => {
+    mockFetchManifest.mockRejectedValue(new Error('Network error'));
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useExclusion('/test/dir', reload));
+    await result.current.exclude('image.png');
+
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('does not call addToast on successful exclude', async () => {
+    const manifest = makeManifest();
+    mockFetchManifest.mockResolvedValue(manifest);
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useExclusion('/test/dir', reload));
+    await result.current.exclude('image.png');
+
+    expect(mockAddToast).not.toHaveBeenCalled();
+  });
+});
+
+describe('useExclusion — unexclude error handling', () => {
+  it('calls addToast with error when fetchManifest throws during unexclude', async () => {
+    mockFetchManifest.mockRejectedValue(new Error('Network error'));
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useExclusion('/test/dir', reload));
+    await result.current.unexclude('image.png');
+
+    expect(mockAddToast).toHaveBeenCalledWith('Failed to unexclude image', 'error');
+  });
+
+  it('calls addToast with error when saveManifest throws during unexclude', async () => {
+    const manifest = makeManifest({ excluded: ['image.png'] });
+    mockFetchManifest.mockResolvedValue(manifest);
+    mockSaveManifest.mockRejectedValue(new Error('Save failed'));
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useExclusion('/test/dir', reload));
+    await result.current.unexclude('image.png');
+
+    expect(mockAddToast).toHaveBeenCalledWith('Failed to unexclude image', 'error');
+  });
+
+  it('does not call reload when unexclude throws', async () => {
+    mockFetchManifest.mockRejectedValue(new Error('Network error'));
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useExclusion('/test/dir', reload));
+    await result.current.unexclude('image.png');
+
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('does not call addToast on successful unexclude', async () => {
+    const manifest = makeManifest({ excluded: ['image.png'] });
+    mockFetchManifest.mockResolvedValue(manifest);
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useExclusion('/test/dir', reload));
+    await result.current.unexclude('image.png');
+
+    expect(mockAddToast).not.toHaveBeenCalled();
   });
 });
