@@ -1,31 +1,12 @@
 import { useState } from 'react';
 import type { FolderImage } from '@appystack/shared';
 import { useFolderContext } from '../contexts/FolderContext.js';
-
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5021';
+import { imageUrl } from '../utils/api.js';
+import { readStorage, writeStorage } from '../lib/storage.js';
 
 type ZoomMode = 'fit' | 'fill' | 'actual';
 
 const STORAGE_KEY = 'thumbrack:previewZoom';
-
-function readStorage<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeStorage(key: string, value: unknown): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
-}
-
-function imageUrl(encodedPath: string): string {
-  return `${BASE}/api/images/${encodedPath}`;
-}
 
 function EmptyState() {
   return (
@@ -113,7 +94,7 @@ function ImageDisplay({ image, zoomMode }: ImageDisplayProps) {
 export function PreviewPane() {
   const { selected } = useFolderContext();
   const [zoomMode, setZoomMode] = useState<ZoomMode>(() =>
-    readStorage<ZoomMode>(STORAGE_KEY, 'fit'),
+    readStorage<ZoomMode>(STORAGE_KEY, 'fit')
   );
 
   function handleZoomChange(mode: ZoomMode) {
@@ -153,16 +134,10 @@ export function PreviewPane() {
             <ImageDisplay image={selected} zoomMode={zoomMode} />
           </div>
           <div className="preview-meta">
-            <span
-              data-testid="preview-filename"
-              className="preview-filename"
-            >
+            <span data-testid="preview-filename" className="preview-filename">
               {selected.filename}
             </span>
-            <span
-              data-testid="preview-filepath"
-              className="preview-filepath"
-            >
+            <span data-testid="preview-filepath" className="preview-filepath">
               {selected.path}
             </span>
           </div>

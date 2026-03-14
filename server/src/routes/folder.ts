@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { promises as fs } from 'node:fs';
 import { join, extname } from 'node:path';
 import { homedir } from 'node:os';
-import type { FolderImage, FolderResponse, ManifestData } from '@appystack/shared';
+import type { FolderImage, FolderResponse } from '@appystack/shared';
 import { apiSuccess, apiFailure } from '../helpers/response.js';
+import { readManifest } from '../helpers/manifestHelpers.js';
 
 function expandHome(p: string): string {
   return p.startsWith('~/') ? join(homedir(), p.slice(2)) : p;
@@ -41,20 +42,6 @@ function buildFolderImage(filename: string, dir: string): FolderImage {
     label: filename,
     encodedPath,
   };
-}
-
-async function readManifest(dir: string): Promise<ManifestData> {
-  const manifestPath = join(dir, MANIFEST_FILENAME);
-  try {
-    const raw = await fs.readFile(manifestPath, 'utf8');
-    const parsed = JSON.parse(raw) as Partial<ManifestData>;
-    return {
-      excluded: Array.isArray(parsed.excluded) ? parsed.excluded : [],
-      lastViewed: parsed.lastViewed ?? null,
-    };
-  } catch {
-    return { excluded: [], lastViewed: null };
-  }
 }
 
 router.get('/', async (req, res) => {

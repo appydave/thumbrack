@@ -15,13 +15,20 @@ vi.mock('node:fs', async () => {
   };
 });
 
+// Mock node:fs/promises (used by manifestHelpers.ts)
+vi.mock('node:fs/promises', () => ({
+  readFile: vi.fn(),
+  writeFile: vi.fn(),
+}));
+
 import { promises as fs } from 'node:fs';
+import * as fsp from 'node:fs/promises';
 import folderRouter from './folder.js';
 
 // fs.readdir without options returns Promise<string[]>; cast the mock accordingly
 const mockAccess = vi.mocked(fs.access);
 const mockReaddir = fs.readdir as unknown as ReturnType<typeof vi.fn>;
-const mockReadFile = vi.mocked(fs.readFile);
+const mockReadFile = vi.mocked(fsp.readFile);
 
 const app = express();
 app.use('/api/folder', folderRouter);
@@ -33,6 +40,12 @@ beforeEach(() => {
 function mockDir(files: string[]): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mockReaddir.mockResolvedValueOnce(files as any);
+}
+
+function enoent(): NodeJS.ErrnoException {
+  const err = new Error('ENOENT: no such file or directory') as NodeJS.ErrnoException;
+  err.code = 'ENOENT';
+  return err;
 }
 
 describe('GET /api/folder', () => {
@@ -59,7 +72,7 @@ describe('GET /api/folder', () => {
 
   it('correctly separates sorted, unsorted, and excluded images', async () => {
     mockAccess.mockResolvedValueOnce(undefined);
-    mockReadFile.mockRejectedValueOnce(new Error('no manifest'));
+    mockReadFile.mockRejectedValueOnce(enoent());
     mockDir(['01-title.png', '02-intro.jpg', 'screenshot.png', 'random.jpeg']);
 
     const res = await request(app).get('/api/folder?path=/test/dir');
@@ -86,7 +99,7 @@ describe('GET /api/folder', () => {
   it('puts excluded filenames from manifest into excluded list', async () => {
     mockAccess.mockResolvedValueOnce(undefined);
     mockReadFile.mockResolvedValueOnce(
-      JSON.stringify({ excluded: ['screenshot.png'], lastViewed: null }),
+      JSON.stringify({ excluded: ['screenshot.png'], lastViewed: null })
     );
     mockDir(['01-title.png', 'screenshot.png']);
 
@@ -102,7 +115,7 @@ describe('GET /api/folder', () => {
 
   it('sorted list is in ascending numeric order', async () => {
     mockAccess.mockResolvedValueOnce(undefined);
-    mockReadFile.mockRejectedValueOnce(new Error('no manifest'));
+    mockReadFile.mockRejectedValueOnce(enoent());
     mockDir(['03-third.png', '01-first.png', '02-second.png']);
 
     const res = await request(app).get('/api/folder?path=/test/dir');
@@ -117,7 +130,7 @@ describe('GET /api/folder', () => {
 
   it('skips __tmp_ prefixed files', async () => {
     mockAccess.mockResolvedValueOnce(undefined);
-    mockReadFile.mockRejectedValueOnce(new Error('no manifest'));
+    mockReadFile.mockRejectedValueOnce(enoent());
     mockDir(['__tmp_upload.png', '01-real.png']);
 
     const res = await request(app).get('/api/folder?path=/test/dir');
@@ -131,7 +144,7 @@ describe('GET /api/folder', () => {
 
   it('skips .thumbrack.json manifest file', async () => {
     mockAccess.mockResolvedValueOnce(undefined);
-    mockReadFile.mockRejectedValueOnce(new Error('no manifest'));
+    mockReadFile.mockRejectedValueOnce(enoent());
     mockDir(['.thumbrack.json', '01-real.png']);
 
     const res = await request(app).get('/api/folder?path=/test/dir');
@@ -144,7 +157,7 @@ describe('GET /api/folder', () => {
 
   it('skips non-image files', async () => {
     mockAccess.mockResolvedValueOnce(undefined);
-    mockReadFile.mockRejectedValueOnce(new Error('no manifest'));
+    mockReadFile.mockRejectedValueOnce(enoent());
     mockDir(['readme.txt', '01-image.png', 'video.mp4']);
 
     const res = await request(app).get('/api/folder?path=/test/dir');
@@ -157,7 +170,7 @@ describe('GET /api/folder', () => {
 
   it('treats single-digit prefixed files as unsorted (e.g. 3-thing.png)', async () => {
     mockAccess.mockResolvedValueOnce(undefined);
-    mockReadFile.mockRejectedValueOnce(new Error('no manifest'));
+    mockReadFile.mockRejectedValueOnce(enoent());
     mockDir(['3-thing.png', '01-sorted.png']);
 
     const res = await request(app).get('/api/folder?path=/test/dir');
@@ -171,7 +184,7 @@ describe('GET /api/folder', () => {
 
   it('encodedPath can be decoded back to the absolute path', async () => {
     mockAccess.mockResolvedValueOnce(undefined);
-    mockReadFile.mockRejectedValueOnce(new Error('no manifest'));
+    mockReadFile.mockRejectedValueOnce(enoent());
     mockDir(['01-title.png']);
 
     const res = await request(app).get('/api/folder?path=/test/dir');
