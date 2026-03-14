@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import type { FolderImage } from '@appystack/shared';
 import { useFolderContext } from '../contexts/FolderContext.js';
-
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5021';
-
-function imageUrl(encodedPath: string): string {
-  return `${BASE}/api/images/${encodedPath}`;
-}
+import { imageUrl } from '../utils/api.js';
 
 function EmptyState() {
   return (
@@ -75,23 +70,14 @@ export function PreviewPane() {
         <EmptyState />
       ) : (
         <>
-          <div
-            className="preview-image-wrap"
-            style={{ flex: 1, minHeight: 0, width: '100%' }}
-          >
+          <div className="preview-image-wrap" style={{ flex: 1, minHeight: 0, width: '100%' }}>
             <ImageDisplay image={selected} />
           </div>
           <div className="preview-meta">
-            <span
-              data-testid="preview-filename"
-              className="preview-filename"
-            >
+            <span data-testid="preview-filename" className="preview-filename">
               {selected.filename}
             </span>
-            <span
-              data-testid="preview-filepath"
-              className="preview-filepath"
-            >
+            <span data-testid="preview-filepath" className="preview-filepath">
               {selected.path}
             </span>
           </div>
