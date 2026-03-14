@@ -172,9 +172,16 @@ describe('FolderContext — reload', () => {
 
   it('preserves the selected image after reload', async () => {
     const response = makeFolderResponse();
+    const manifestResponse = { excluded: [], lastViewed: null, groupBoundaries: [] };
     vi.mocked(fetch)
       .mockResolvedValueOnce(new Response(JSON.stringify(envelope(response)), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(envelope(response)), { status: 200 }));
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope(manifestResponse)), { status: 200 })
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify(envelope(response)), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope(manifestResponse)), { status: 200 })
+      );
 
     const { result } = renderHook(() => useFolderContext(), { wrapper });
 
@@ -213,12 +220,19 @@ describe('FolderContext — reload', () => {
         },
       ],
     });
+    const manifestResponse = { excluded: [], lastViewed: null, groupBoundaries: [] };
     vi.mocked(fetch)
       .mockResolvedValueOnce(
         new Response(JSON.stringify(envelope(initialResponse)), { status: 200 })
       )
       .mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope(manifestResponse)), { status: 200 })
+      )
+      .mockResolvedValueOnce(
         new Response(JSON.stringify(envelope(reloadedResponse)), { status: 200 })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope(manifestResponse)), { status: 200 })
       );
 
     const { result } = renderHook(() => useFolderContext(), { wrapper });
