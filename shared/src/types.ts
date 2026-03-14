@@ -1,11 +1,11 @@
 // TODO: Extend these interfaces for your project
 
 export interface FolderImage {
-  filename: string;       // e.g. "01-ecamm-title.png"
-  path: string;           // absolute path on disk
-  number: number | null;  // parsed prefix, null if unsorted
-  label: string;          // filename without the NN- prefix
-  encodedPath: string;    // Buffer.from(path).toString('base64url')
+  filename: string; // e.g. "01-ecamm-title.png"
+  path: string; // absolute path on disk
+  number: number | null; // parsed prefix, null if unsorted
+  label: string; // filename without the NN- prefix
+  encodedPath: string; // Buffer.from(path).toString('base64url')
 }
 
 export interface FolderResponse {
@@ -16,8 +16,9 @@ export interface FolderResponse {
 }
 
 export interface ManifestData {
-  excluded: string[];        // filenames to exclude
+  excluded: string[]; // filenames to exclude
   lastViewed: string | null;
+  groupBoundaries?: string[]; // filenames that have a divider rendered BEFORE them
 }
 
 /** Request body for renaming a single file to a new number. */

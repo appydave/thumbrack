@@ -17,6 +17,12 @@ vi.mock('../helpers/renameHelpers.js', async (importOriginal) => {
   };
 });
 
+// Mock manifestHelpers so we can control manifest state in reorder tests
+vi.mock('../helpers/manifestHelpers.js', () => ({
+  readManifest: vi.fn().mockResolvedValue({ excluded: [], lastViewed: null, groupBoundaries: [] }),
+  writeManifest: vi.fn().mockResolvedValue(undefined),
+}));
+
 import renameRouter from './rename.js';
 
 const app = express();
@@ -37,9 +43,7 @@ describe('POST /api/rename', () => {
   });
 
   it('returns 400 when filename is missing', async () => {
-    const res = await request(app)
-      .post('/api/rename')
-      .send({ dir: '/some/dir', newNumber: 1 });
+    const res = await request(app).post('/api/rename').send({ dir: '/some/dir', newNumber: 1 });
     expect(res.status).toBe(400);
     expect(res.body.status).toBe('error');
   });
@@ -181,5 +185,74 @@ describe('POST /api/reorder', () => {
     expect(res.status).toBe(200);
     // twoPassRename called with empty operations since filename === targetFilename
     expect(twoPassRename).toHaveBeenCalledWith('/some/dir', []);
+  });
+
+  it('translates groupBoundaries filename when the file is renamed during reorder', async () => {
+    const { twoPassRename } = await import('../helpers/renameHelpers.js');
+    const { readManifest, writeManifest } = await import('../helpers/manifestHelpers.js');
+
+    vi.mocked(twoPassRename).mockResolvedValueOnce([{ from: '05-foo.png', to: '03-foo.png' }]);
+    vi.mocked(readManifest).mockResolvedValueOnce({
+      excluded: [],
+      lastViewed: null,
+      groupBoundaries: ['05-foo.png'],
+    });
+
+    // order: 05-foo.png at position 3 → becomes 03-foo.png
+    const res = await request(app)
+      .post('/api/reorder')
+      .send({ dir: '/some/dir', order: ['01-a.png', '02-b.png', '05-foo.png'] });
+
+    expect(res.status).toBe(200);
+    expect(writeManifest).toHaveBeenCalledWith(
+      '/some/dir',
+      expect.objectContaining({ groupBoundaries: ['03-foo.png'] })
+    );
+  });
+
+  it('leaves groupBoundaries unchanged when boundary file is not involved in reorder', async () => {
+    const { twoPassRename } = await import('../helpers/renameHelpers.js');
+    const { readManifest, writeManifest } = await import('../helpers/manifestHelpers.js');
+
+    vi.mocked(twoPassRename).mockResolvedValueOnce([{ from: '05-bar.png', to: '01-bar.png' }]);
+    vi.mocked(readManifest).mockResolvedValueOnce({
+      excluded: [],
+      lastViewed: null,
+      groupBoundaries: ['02-stable.png'],
+    });
+
+    // order: 05-bar.png → 01, 02-stable.png stays at position 2
+    const res = await request(app)
+      .post('/api/reorder')
+      .send({ dir: '/some/dir', order: ['05-bar.png', '02-stable.png'] });
+
+    expect(res.status).toBe(200);
+    expect(writeManifest).toHaveBeenCalledWith(
+      '/some/dir',
+      expect.objectContaining({ groupBoundaries: ['02-stable.png'] })
+    );
+  });
+
+  it('removes groupBoundaries entry when boundary file no longer exists after reorder', async () => {
+    const { twoPassRename } = await import('../helpers/renameHelpers.js');
+    const { readManifest, writeManifest } = await import('../helpers/manifestHelpers.js');
+
+    vi.mocked(twoPassRename).mockResolvedValueOnce([]);
+    vi.mocked(readManifest).mockResolvedValueOnce({
+      excluded: [],
+      lastViewed: null,
+      groupBoundaries: ['99-gone.png'],
+    });
+
+    // order does not include 99-gone.png — it was removed from the set
+    const res = await request(app)
+      .post('/api/reorder')
+      .send({ dir: '/some/dir', order: ['01-a.png', '02-b.png'] });
+
+    expect(res.status).toBe(200);
+    expect(writeManifest).toHaveBeenCalledWith(
+      '/some/dir',
+      expect.objectContaining({ groupBoundaries: [] })
+    );
   });
 });

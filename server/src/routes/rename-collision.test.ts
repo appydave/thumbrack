@@ -38,10 +38,10 @@ async function touch(filename: string): Promise<void> {
   await writeFile(join(dir, filename), `content:${filename}`);
 }
 
-// Helper: get all filenames in the temp dir, sorted
+// Helper: get all image filenames in the temp dir, sorted (excludes manifest and hidden files)
 async function ls(): Promise<string[]> {
   const files = await readdir(dir);
-  return files.sort();
+  return files.filter((f) => !f.startsWith('.')).sort();
 }
 
 describe('POST /api/reorder — collision path (real filesystem)', () => {

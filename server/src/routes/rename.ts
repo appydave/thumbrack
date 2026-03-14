@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { RenameRequest, ReorderRequest, RenameResponse } from '@appystack/shared';
 import { apiSuccess, apiFailure } from '../helpers/response.js';
 import { extractLabel, buildFilename, twoPassRename } from '../helpers/renameHelpers.js';
+import { readManifest, writeManifest } from '../helpers/manifestHelpers.js';
 
 const router = Router();
 
@@ -118,6 +119,31 @@ router.post('/api/reorder', async (req, res) => {
 
   try {
     const renamedFiles = await twoPassRename(dir, operations);
+
+    // Build a rename map from the completed operations: old filename → new filename
+    const renameMap = new Map<string, string>(operations.map(({ from, to }) => [from, to]));
+
+    // Update groupBoundaries in the manifest to reflect the new filenames
+    const manifest = await readManifest(dir);
+    const currentBoundaries = manifest.groupBoundaries ?? [];
+
+    // Determine the final set of filenames after reorder to filter out stale boundaries
+    const finalFilenames = new Set<string>(
+      order.map((filename, i) => {
+        const targetNumber = i + 1;
+        const label = extractLabel(filename);
+        return buildFilename(targetNumber, label);
+      })
+    );
+
+    // Translate each boundary to its new filename (if renamed), then filter out
+    // any that are no longer present in the final file set
+    const filteredBoundaries = currentBoundaries
+      .map((filename) => renameMap.get(filename) ?? filename)
+      .filter((filename) => finalFilenames.has(filename));
+
+    await writeManifest(dir, { ...manifest, groupBoundaries: filteredBoundaries });
+
     const response: RenameResponse = { success: true, renamedFiles };
     apiSuccess(res, response);
   } catch (err) {

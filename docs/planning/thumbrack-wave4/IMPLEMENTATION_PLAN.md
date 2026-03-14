@@ -6,7 +6,7 @@
 
 ## Summary
 
-- Total: 5 | Complete: 0 | In Progress: 0 | Pending: 5 | Failed: 0
+- Total: 5 | Complete: 0 | In Progress: 4 | Pending: 1 | Failed: 0
 
 ## Dependency Order
 
@@ -32,13 +32,13 @@ File conflict check:
 
 ## Pending
 
-- [ ] fix-drag-opacity — The dragged item (source position) fades to opacity 0.35 during drag, which renders as near-black over the dark background (#0d0b08). Change to a more visible value (0.6) and add a `.drag-source` CSS class so the faded slot is visually clear without disappearing.
-- [ ] fix-drag-deselects — After every drag-and-drop reorder, reload() is called which resets selected to null in FolderContext.loadFolder(). This clears the preview pane after every drag. Fix: capture the selected filename before reload, restore it after reload completes.
-- [ ] fix-full-card-drag — Drag is currently restricted to the 20px ⠿ handle icon (listeners are on the handle <div>, not the <li>). Move {...listeners} to the <li> element so the entire card is draggable. Keep the handle icon visible but decorative. Update tests.
-- [ ] schema-dividers — Add groupBoundaries?: string[] to ManifestData in shared/src/types.ts. Update manifestHelpers.ts to read/write the field. Update the reorder endpoint (rename.ts POST /api/reorder) to translate boundary filenames to their new names after a reorder (since filenames change, boundary anchors must be updated atomically in the same operation). Add tests.
 - [ ] render-dividers — GroupDivider component (thin amber horizontal rule with optional remove button). Inject between SortedPane items when image.filename is in groupBoundaries. Add "Add divider before this" and "Remove divider" to the right-click context menu. Wire to manifest save via useExclusion-style hook pattern. Add tests.
 
 ## In Progress
+
+- [~] fix-drag-ux — (WU-1 + WU-3 combined) Fix opacity 0.35→0.6 + add .drag-source CSS class. Move {...listeners} from drag handle div to <li> for full-card drag. Keep handle decorative.
+- [~] fix-drag-deselects — After every drag-and-drop reorder, reload() resets selected to null. Capture selected filename before reload, restore after.
+- [~] schema-dividers — Add groupBoundaries?: string[] to ManifestData. Update manifestHelpers.ts + reorder endpoint to translate boundary filenames atomically. Add tests.
 
 ## Complete
 

@@ -96,6 +96,7 @@ router.post('/regenerate', async (req, res) => {
       existing.lastViewed !== null && imageFiles.has(existing.lastViewed)
         ? existing.lastViewed
         : null,
+    groupBoundaries: (existing.groupBoundaries ?? []).filter((f: string) => imageFiles.has(f)),
   };
 
   await writeManifest(dir, reconciled);
