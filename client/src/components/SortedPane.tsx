@@ -1,16 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FolderImage } from '@appystack/shared';
-import {
-  DndContext,
-  closestCenter,
-  DragOverlay,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
+import { DndContext, closestCenter, DragOverlay, type DragStartEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useFolderContext } from '../contexts/FolderContext.js';
 import { useToast } from '../contexts/ToastContext.js';
@@ -56,16 +47,16 @@ function SortableItem({
   const [imgError, setImgError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: image.filename });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: image.filename,
+  });
 
-  const numberBadge =
-    image.number !== null ? String(image.number).padStart(2, '0') : '--';
+  const numberBadge = image.number !== null ? String(image.number).padStart(2, '0') : '--';
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.35 : 1,
+    opacity: isDragging ? 0.6 : 1,
   };
 
   useEffect(() => {
@@ -88,13 +79,17 @@ function SortableItem({
     'img-item',
     isSelected ? 'selected' : '',
     isOver ? 'is-over' : '',
-  ].filter(Boolean).join(' ');
+    isDragging ? 'drag-source' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <li
       ref={setNodeRef}
       style={style}
       {...attributes}
+      {...listeners}
       className={itemClass}
       onClick={onSelect}
       onContextMenu={onContextMenu}
@@ -102,20 +97,18 @@ function SortableItem({
       role="option"
     >
       {/* Drag handle */}
-      <div
-        {...listeners}
-        className="drag-handle"
-        title="Drag to reorder"
-        onClick={(e) => e.stopPropagation()}
-        aria-label="Drag handle"
-      >
+      <div className="drag-handle" title="Drag to reorder" aria-label="Drag handle">
         ⠿
       </div>
 
       {/* Thumbnail */}
       <div className="img-thumb">
         {imgError ? (
-          <div className="img-thumb-error" aria-label="Image unavailable" data-testid="thumb-error" />
+          <div
+            className="img-thumb-error"
+            aria-label="Image unavailable"
+            data-testid="thumb-error"
+          />
         ) : (
           <img
             src={imageUrl(image.encodedPath)}
@@ -156,11 +149,7 @@ function SortableItem({
       )}
 
       {/* Label */}
-      <span
-        className="img-label"
-        title={image.label}
-        data-testid="item-label"
-      >
+      <span className="img-label" title={image.label} data-testid="item-label">
         {image.label}
       </span>
     </li>
@@ -173,8 +162,7 @@ function SortableItem({
 
 function DragOverlayItem({ image }: { image: FolderImage }) {
   const [imgError, setImgError] = useState(false);
-  const numberBadge =
-    image.number !== null ? String(image.number).padStart(2, '0') : '--';
+  const numberBadge = image.number !== null ? String(image.number).padStart(2, '0') : '--';
 
   return (
     <div className="drag-overlay">
@@ -285,9 +273,7 @@ export function SortedPane() {
             </ul>
           </SortableContext>
 
-          <DragOverlay>
-            {activeImage ? <DragOverlayItem image={activeImage} /> : null}
-          </DragOverlay>
+          <DragOverlay>{activeImage ? <DragOverlayItem image={activeImage} /> : null}</DragOverlay>
         </DndContext>
       )}
 
@@ -298,7 +284,9 @@ export function SortedPane() {
           items={[
             {
               label: 'Exclude this image',
-              onClick: () => { void exclude(menu.image.filename); },
+              onClick: () => {
+                void exclude(menu.image.filename);
+              },
               danger: true,
             },
           ]}

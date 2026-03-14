@@ -6,39 +6,39 @@
 
 :root {
   /* Warm near-black palette */
-  --bg:          #0d0b08;
-  --bg-sidebar:  #131009;
-  --surface:     #1c1710;
-  --surface-2:   #252018;
-  --surface-3:   #2e2820;
+  --bg: #0d0b08;
+  --bg-sidebar: #131009;
+  --surface: #1c1710;
+  --surface-2: #252018;
+  --surface-3: #2e2820;
 
   /* Borders */
-  --border:      #2a221a;
-  --border-2:    #3a3028;
+  --border: #2a221a;
+  --border-2: #3a3028;
 
   /* Amber accent — the soul of the UI */
-  --amber:       #c8973b;
-  --amber-bright:#e0b050;
-  --amber-dim:   rgba(200, 151, 59, 0.12);
-  --amber-glow:  rgba(200, 151, 59, 0.06);
+  --amber: #c8973b;
+  --amber-bright: #e0b050;
+  --amber-dim: rgba(200, 151, 59, 0.12);
+  --amber-glow: rgba(200, 151, 59, 0.06);
 
   /* Text */
-  --text-1:      #f0e6d0;
-  --text-2:      #9a8b75;
-  --text-3:      #554c3e;
+  --text-1: #f0e6d0;
+  --text-2: #9a8b75;
+  --text-3: #554c3e;
 
   /* Status */
-  --success:     #5c9e6e;
-  --danger:      #b85449;
-  --danger-dim:  rgba(184, 84, 73, 0.15);
+  --success: #5c9e6e;
+  --danger: #b85449;
+  --danger-dim: rgba(184, 84, 73, 0.15);
 
   /* Fonts */
   --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-ui:      'Outfit', system-ui, sans-serif;
-  --font-mono:    'DM Mono', 'Fira Code', monospace;
+  --font-ui: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'DM Mono', 'Fira Code', monospace;
 
   /* Sidebar width */
-  --sidebar-w:   420px;
+  --sidebar-w: 420px;
 }
 
 @theme {
@@ -57,7 +57,9 @@
 
 /* ── Base ──────────────────────────────────────────────────────────────────── */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -158,7 +160,9 @@ body {
   font-size: 13px;
   letter-spacing: 0.03em;
   cursor: pointer;
-  transition: background 0.15s, opacity 0.15s;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
   white-space: nowrap;
 }
 
@@ -182,7 +186,9 @@ body {
   font-size: 13px;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
   white-space: nowrap;
 }
 
@@ -267,7 +273,9 @@ body {
   cursor: pointer;
   user-select: none;
   border-left: 3px solid transparent;
-  transition: background 0.1s, border-color 0.1s;
+  transition:
+    background 0.1s,
+    border-color 0.1s;
   position: relative;
 }
 
@@ -282,6 +290,11 @@ body {
 
 .img-item.is-over {
   box-shadow: inset 0 2px 0 var(--amber);
+}
+
+.img-item.drag-source {
+  border-style: dashed;
+  border-color: var(--amber-dim);
 }
 
 .img-item.excluded-item {
@@ -434,7 +447,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Preview pane ──────────────────────────────────────────────────────────── */
@@ -500,8 +515,8 @@ body {
   object-fit: contain;
   border-radius: 4px;
   box-shadow:
-    0 4px 24px rgba(0,0,0,0.5),
-    0 1px 4px rgba(0,0,0,0.4);
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 .preview-meta {
@@ -543,8 +558,8 @@ body {
   padding: 4px;
   min-width: 148px;
   box-shadow:
-    0 8px 24px rgba(0,0,0,0.4),
-    0 2px 8px rgba(0,0,0,0.3);
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .ctx-menu-item {
@@ -559,7 +574,9 @@ body {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .ctx-menu-item:hover {
@@ -587,7 +604,7 @@ body {
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 500;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   animation: toast-in 0.2s ease-out;
   border: 1px solid transparent;
 }
@@ -611,8 +628,14 @@ body {
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ── DragOverlay card ──────────────────────────────────────────────────────── */
@@ -625,6 +648,6 @@ body {
   background: var(--surface-3);
   border: 1px solid var(--amber);
   border-radius: 6px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   width: 220px;
 }
