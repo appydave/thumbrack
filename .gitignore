@@ -32,3 +32,6 @@ test-results/
 
 # TypeScript
 *.tsbuildinfo
+
+# MCP tooling
+.playwright-mcp/
