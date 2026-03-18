@@ -99,10 +99,10 @@ describe('POST /api/manifest', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ success: true });
 
-    // Verify it was actually written
+    // Verify it was actually written; route normalises missing groupBoundaries to []
     const { readFile } = await import('node:fs/promises');
     const raw = await readFile(join(tmpDir, '.thumbrack.json'), 'utf-8');
-    expect(JSON.parse(raw)).toEqual(manifest);
+    expect(JSON.parse(raw)).toEqual({ ...manifest, groupBoundaries: [] });
   });
 
   it('persists groupBoundaries to disk (AP-8 fix)', async () => {

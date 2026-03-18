@@ -136,11 +136,14 @@ router.post('/api/reorder', async (req, res) => {
       })
     );
 
+    // The first filename in the final order — a divider before position 1 is useless
+    const firstFinalFilename = order.length > 0 ? buildFilename(1, extractLabel(order[0])) : null;
+
     // Translate each boundary to its new filename (if renamed), then filter out
-    // any that are no longer present in the final file set
+    // any that are no longer present in the final file set or stuck at position 0
     const filteredBoundaries = currentBoundaries
       .map((filename) => renameMap.get(filename) ?? filename)
-      .filter((filename) => finalFilenames.has(filename));
+      .filter((filename) => finalFilenames.has(filename) && filename !== firstFinalFilename);
 
     await writeManifest(dir, { ...manifest, groupBoundaries: filteredBoundaries });
 

@@ -284,7 +284,7 @@ body {
 }
 
 .img-item.selected {
-  background: var(--amber-glow);
+  background: var(--surface-2);
   border-left-color: var(--amber);
 }
 
@@ -697,15 +697,15 @@ body {
 
 .group-divider__line {
   flex: 1;
-  height: 1px;
-  background: var(--amber-dim);
-  opacity: 0.6;
+  height: 2px;
+  background: var(--amber);
+  opacity: 0.5;
 }
 
 .group-divider__remove {
   font-size: 11px;
   line-height: 1;
-  color: var(--amber-dim);
+  color: var(--amber);
   background: none;
   border: none;
   cursor: pointer;
@@ -717,6 +717,11 @@ body {
 .group-divider__remove:hover {
   opacity: 1;
   color: var(--amber);
+}
+
+.group-divider--dragging .group-divider__line {
+  opacity: 1;
+  height: 3px;
 }
 
 /* ── DragOverlay card ──────────────────────────────────────────────────────── */

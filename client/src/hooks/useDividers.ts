@@ -9,6 +9,7 @@ import { fetchManifest, saveManifest } from '../utils/api.js';
 export interface UseDividersReturn {
   addDivider: (filename: string) => Promise<void>;
   removeDivider: (filename: string) => Promise<void>;
+  moveDivider: (oldAnchor: string, newAnchor: string) => Promise<void>;
 }
 
 export function useDividers(): UseDividersReturn {
@@ -37,5 +38,17 @@ export function useDividers(): UseDividersReturn {
     }
   };
 
-  return { addDivider, removeDivider };
+  const moveDivider = async (oldAnchor: string, newAnchor: string): Promise<void> => {
+    try {
+      const manifest = await fetchManifest(dir!);
+      const boundaries = manifest.groupBoundaries ?? [];
+      manifest.groupBoundaries = boundaries.filter((f) => f !== oldAnchor).concat(newAnchor);
+      await saveManifest(dir!, manifest);
+      await reload();
+    } catch {
+      addToast('Failed to move divider', 'error');
+    }
+  };
+
+  return { addDivider, removeDivider, moveDivider };
 }

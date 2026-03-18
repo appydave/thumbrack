@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, type FormEvent } from 'react';
+import { useState, useRef, useCallback, useEffect, type FormEvent } from 'react';
 import { useFolderContext } from '../contexts/FolderContext.js';
 import { useToast } from '../contexts/ToastContext.js';
 import { regenerateManifest } from '../utils/api.js';
@@ -23,6 +23,7 @@ const SIDEBAR_WIDTHS: Record<SidebarSize, string> = {
 };
 
 const STORAGE_KEY = 'thumbrack:sidebarSize';
+const LAST_DIR_KEY = 'thumbrack:lastDir';
 
 function readStorage<T>(key: string, fallback: T): T {
   try {
@@ -36,7 +37,9 @@ function readStorage<T>(key: string, fallback: T): T {
 function writeStorage(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+  } catch (_e) {
+    // ignore storage write errors
+  }
 }
 
 export default function ThumbRackApp() {
@@ -51,6 +54,7 @@ export default function ThumbRackApp() {
 
   const { recentFolders, addRecentFolder } = useRecentFolders();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const didRestoreRef = useRef(false);
 
   const closeDropdown = useCallback(() => setDropdownOpen(false), []);
   useClickOutside(dropdownRef, closeDropdown);
@@ -66,7 +70,19 @@ export default function ThumbRackApp() {
     setInputValue(trimmed);
     await loadFolder(trimmed);
     addRecentFolder(trimmed);
+    writeStorage(LAST_DIR_KEY, trimmed);
   }
+
+  // Restore last folder on mount (once only)
+  useEffect(() => {
+    if (didRestoreRef.current) return;
+    didRestoreRef.current = true;
+    const savedDir = readStorage<string | null>(LAST_DIR_KEY, null);
+    if (savedDir) {
+      void handleLoadPath(savedDir);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleLoad(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -151,13 +167,13 @@ export default function ThumbRackApp() {
                     right: 0,
                     zIndex: 100,
                     minWidth: '280px',
-                    background: 'white',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border-2)',
+                    borderRadius: '6px',
                     listStyle: 'none',
                     margin: 0,
                     padding: '4px 0',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                   }}
                 >
                   {recentFolders.map((folder) => (
@@ -173,7 +189,9 @@ export default function ThumbRackApp() {
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
-                          fontSize: '0.875rem',
+                          fontSize: '12px',
+                          color: 'var(--text-2)',
+                          fontFamily: 'var(--font-mono)',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',

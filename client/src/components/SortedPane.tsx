@@ -1,7 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { FolderImage } from '@appystack/shared';
-import { DndContext, closestCenter, DragOverlay, type DragStartEvent } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import {
+  DndContext,
+  closestCenter,
+  DragOverlay,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useFolderContext } from '../contexts/FolderContext.js';
 import { useToast } from '../contexts/ToastContext.js';
@@ -53,6 +67,22 @@ function SortableItem({
     id: image.filename,
   });
 
+  // Scroll into view when this item becomes selected (keyboard navigation)
+  const nodeRef = useRef<HTMLLIElement | null>(null);
+  const setCombinedRef = useCallback(
+    (node: HTMLLIElement | null) => {
+      nodeRef.current = node;
+      setNodeRef(node);
+    },
+    [setNodeRef]
+  );
+
+  useEffect(() => {
+    if (isSelected && nodeRef.current) {
+      nodeRef.current.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [isSelected]);
+
   const numberBadge = image.number !== null ? String(image.number).padStart(2, '0') : '--';
 
   const style = {
@@ -88,7 +118,7 @@ function SortableItem({
 
   return (
     <li
-      ref={setNodeRef}
+      ref={setCombinedRef}
       style={style}
       {...attributes}
       {...listeners}
@@ -186,6 +216,34 @@ function DragOverlayItem({ image }: { image: FolderImage }) {
 }
 
 // ---------------------------------------------------------------------------
+// SortableDivider
+// ---------------------------------------------------------------------------
+
+function SortableDivider({
+  anchorFilename,
+  onRemove,
+}: {
+  anchorFilename: string;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `__div:${anchorFilename}`,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+  return (
+    // attributes on the li for a11y; listeners only on the line inside GroupDivider
+    // so the × button click is never intercepted by the drag handlers
+    <li ref={setNodeRef} style={style} {...attributes} role="presentation">
+      <GroupDivider onRemove={onRemove} dragHandleProps={listeners} />
+    </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // SortedPane
 // ---------------------------------------------------------------------------
 
@@ -195,11 +253,16 @@ export function SortedPane() {
   const [localActiveId, setLocalActiveId] = useState<string | null>(null);
   const { menu, openMenu, closeMenu } = useContextMenu();
   const { exclude } = useExclusion(dir, reload);
-  const { addDivider, removeDivider } = useDividers();
+  const { addDivider, removeDivider, moveDivider } = useDividers();
   const { editingFilename, editValue, setEditValue, startEdit, confirmEdit, cancelEdit } =
     useManualEntry(dir, reload, sorted, (msg) => addToast(msg, 'error'));
 
   useKeyboardNav(startEdit);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const { handleDragEnd, handleDragOver, overId } = useDragDrop({
     dir,
@@ -208,23 +271,113 @@ export function SortedPane() {
     reload,
   });
 
+  // Interleave divider IDs with image IDs so dividers are sortable items.
+  // Divider IDs use the prefix "__div:" to distinguish them from filenames.
+  const DIVIDER_PREFIX = '__div:';
+  const sortedItems = sorted.flatMap((img) => {
+    const items: string[] = [];
+    if (groupBoundaries.includes(img.filename)) {
+      items.push(`${DIVIDER_PREFIX}${img.filename}`);
+    }
+    items.push(img.filename);
+    return items;
+  });
+
   const handleDragStart = (event: DragStartEvent) => {
     setLocalActiveId(event.active.id as string);
   };
 
   const handleDragEndWrapped = (event: Parameters<typeof handleDragEnd>[0]) => {
     setLocalActiveId(null);
-    handleDragEnd(event);
+
+    const activeId = event.active.id as string;
+    const overId = event.over?.id as string | undefined;
+
+    if (activeId.startsWith('__div:') && overId) {
+      const oldAnchor = activeId.slice('__div:'.length);
+      // Find the first image ID at or after the drop target
+      const overIndex = sortedItems.indexOf(overId);
+      let newAnchor: string | null = null;
+      for (let i = overIndex; i < sortedItems.length; i++) {
+        if (!sortedItems[i].startsWith('__div:')) {
+          newAnchor = sortedItems[i];
+          break;
+        }
+      }
+      // Refuse to anchor divider before the very first item (position 0 is useless)
+      if (!newAnchor || newAnchor === sorted[0]?.filename || newAnchor === oldAnchor) return;
+      void moveDivider(oldAnchor, newAnchor);
+      return;
+    }
+
+    // If an image was dragged and landed ON a divider element, resolve the divider
+    // to its anchor filename so the reorder proceeds as if it dropped on that image.
+    // Without this, the divider acts as a wall — sorted.findIndex returns -1 and bails.
+    //
+    // Special case: if the anchor item drags onto its OWN divider (anchor === activeId),
+    // the divider is stuck at position 0 with nowhere to go. Auto-remove it so the
+    // user isn't left completely stuck.
+    let resolvedEvent = event;
+    if (!activeId.startsWith('__div:') && overId?.startsWith('__div:')) {
+      const anchorFilename = overId.slice('__div:'.length);
+
+      if (anchorFilename === activeId) {
+        // The anchor item dragged onto its own divider.
+        // The user wants to "join the group above" — they don't want to move the item,
+        // they want the divider to slide past them to the next item.
+        // Action: reanchor divider to the next item after the anchor (no reorder needed).
+        const dividerIndex = sortedItems.indexOf(overId);
+
+        // Check if there's any item above the divider — if not it's at position 0, just remove
+        let hasItemAbove = false;
+        for (let i = dividerIndex - 1; i >= 0; i--) {
+          if (!sortedItems[i].startsWith('__div:')) {
+            hasItemAbove = true;
+            break;
+          }
+        }
+        if (!hasItemAbove) {
+          void removeDivider(anchorFilename);
+          return;
+        }
+
+        // Find the next image after the anchor to become the new divider anchor
+        const anchorIndex = sortedItems.indexOf(activeId);
+        let nextAfterAnchor: string | null = null;
+        for (let i = anchorIndex + 1; i < sortedItems.length; i++) {
+          if (!sortedItems[i].startsWith('__div:')) {
+            nextAfterAnchor = sortedItems[i];
+            break;
+          }
+        }
+
+        if (!nextAfterAnchor) {
+          // Anchor is last item — divider at the end is useless, remove it
+          void removeDivider(anchorFilename);
+        } else {
+          // Reanchor: divider slides past the anchor to the next item
+          void moveDivider(anchorFilename, nextAfterAnchor);
+        }
+        return; // no reorder — anchor stays in its current position
+      } else {
+        resolvedEvent = {
+          ...event,
+          over: event.over ? { ...event.over, id: anchorFilename } : null,
+        };
+      }
+    }
+
+    handleDragEnd(resolvedEvent);
   };
 
   const activeImage =
-    localActiveId !== null
+    localActiveId !== null && !localActiveId.startsWith('__div:')
       ? (sorted.find((img) => img.filename === localActiveId) ??
         unsorted.find((img) => img.filename === localActiveId) ??
         null)
       : null;
 
-  const sortedIds = sorted.map((img) => img.filename);
+  const activeIsDivider = localActiveId?.startsWith(DIVIDER_PREFIX) ?? false;
 
   return (
     <div data-testid="sorted-pane" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -242,27 +395,33 @@ export function SortedPane() {
         </div>
       ) : (
         <DndContext
+          sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDragEnd={handleDragEndWrapped}
         >
-          <SortableContext items={sortedIds} strategy={verticalListSortingStrategy}>
+          <SortableContext items={sortedItems} strategy={verticalListSortingStrategy}>
             <ul
               role="listbox"
               aria-label="Sorted images"
               style={{ margin: 0, padding: 0, listStyle: 'none' }}
             >
-              {sorted.map((image) => (
-                <React.Fragment key={image.encodedPath}>
-                  {groupBoundaries.includes(image.filename) && (
-                    <GroupDivider
-                      onRemove={() => {
-                        void removeDivider(image.filename);
-                      }}
+              {sortedItems.map((id) => {
+                if (id.startsWith(DIVIDER_PREFIX)) {
+                  const anchorFilename = id.slice(DIVIDER_PREFIX.length);
+                  return (
+                    <SortableDivider
+                      key={id}
+                      anchorFilename={anchorFilename}
+                      onRemove={() => void removeDivider(anchorFilename)}
                     />
-                  )}
+                  );
+                }
+                const image = sorted.find((img) => img.filename === id)!;
+                return (
                   <SortableItem
+                    key={image.encodedPath}
                     image={image}
                     isSelected={selected?.encodedPath === image.encodedPath}
                     onSelect={() => select(image)}
@@ -279,12 +438,20 @@ export function SortedPane() {
                     onConfirm={confirmEdit}
                     onCancel={cancelEdit}
                   />
-                </React.Fragment>
-              ))}
+                );
+              })}
             </ul>
           </SortableContext>
 
-          <DragOverlay>{activeImage ? <DragOverlayItem image={activeImage} /> : null}</DragOverlay>
+          <DragOverlay>
+            {activeIsDivider ? (
+              <div className="group-divider group-divider--dragging">
+                <div className="group-divider__line" />
+              </div>
+            ) : activeImage ? (
+              <DragOverlayItem image={activeImage} />
+            ) : null}
+          </DragOverlay>
         </DndContext>
       )}
 
