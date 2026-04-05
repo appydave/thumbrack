@@ -5,15 +5,51 @@ status: snapshot
 sources:
   - CLAUDE.md
   - package.json
+  - README.md
+  - appystack.json
+  - .env.example
+  - Procfile
   - shared/src/types.ts
+  - shared/src/constants.ts
+  - shared/src/index.ts
+  - server/src/index.ts
   - server/src/routes/folder.ts
   - server/src/routes/rename.ts
   - server/src/routes/manifest.ts
+  - server/src/routes/images.ts
+  - server/src/routes/health.ts
+  - server/src/routes/info.ts
   - server/src/helpers/renameHelpers.ts
+  - server/src/helpers/manifestHelpers.ts
+  - server/src/helpers/response.ts
+  - server/src/helpers/AppError.ts
+  - server/src/config/env.ts
+  - client/src/App.tsx
+  - client/src/utils/api.ts
   - client/src/contexts/FolderContext.tsx
+  - client/src/contexts/ToastContext.tsx
   - client/src/components/SortedPane.tsx
+  - client/src/components/UnsortedPane.tsx
+  - client/src/components/PreviewPane.tsx
+  - client/src/components/ExcludedPane.tsx
+  - client/src/components/GroupDivider.tsx
+  - client/src/components/ContextMenu.tsx
+  - client/src/components/KebabMenu.tsx
+  - client/src/components/ToastContainer.tsx
+  - client/src/hooks/useDragDrop.ts
+  - client/src/hooks/useManualEntry.ts
+  - client/src/hooks/useKeyboardNav.ts
+  - client/src/hooks/useContextMenu.ts
+  - client/src/hooks/useExclusion.ts
+  - client/src/hooks/useDividers.ts
+  - client/src/hooks/useRecentFolders.ts
+  - client/src/hooks/useClickOutside.ts
+  - client/src/pages/ThumbRackApp.tsx
+  - client/src/pages/LandingPage.tsx
+  - scripts/start.sh
   - docs/planning/BACKLOG.md
   - docs/planning/thumbrack-feedback.md
+  - context.globs.json
 regenerate: 'Run /system-context in the repo root'
 ---
 
@@ -69,7 +105,7 @@ Desktop image sequencer that solves the pain of manually renaming numbered slide
 
 ### Excluding and restoring images
 
-1. User right-clicks a sorted or unsorted image → "Exclude this image".
+1. User right-clicks a sorted or unsorted image and selects "Exclude this image".
 2. `useExclusion.exclude(filename)` fetches the current manifest, adds the filename to `excluded`, and saves via `POST /api/manifest?dir=`.
 3. `reload` moves the image from sorted/unsorted to the excluded bucket. The excluded pane shows greyed-out thumbnails with a restore option.
 4. Restoring removes the filename from the manifest exclusion list and triggers a reload.
@@ -80,13 +116,13 @@ Desktop image sequencer that solves the pain of manually renaming numbered slide
   - _Alternative considered_: Keeping a persistent server-side store with full image metadata.
   - _Why rejected_: Adds synchronisation complexity. The filesystem already tracks what matters (filename = number + label). Single-user local tool doesn't need shared state.
 
-- **`NN-label.ext` as the sole sequencing convention**: Numbers are two-digit zero-padded integers 01–99. This is a hard constraint — the pattern `^\d{2}-(.+)$` is the only thing that marks an image as "sorted." Files not matching this pattern are "unsorted" regardless of filename.
+- **`NN-label.ext` as the sole sequencing convention**: Numbers are two-digit zero-padded integers 01-99. This is a hard constraint — the pattern `^\d{2}-(.+)$` is the only thing that marks an image as "sorted." Files not matching this pattern are "unsorted" regardless of filename.
   - _Alternative considered_: Arbitrary numbering schemes (1-, 001-, etc.) or metadata-based ordering.
   - _Why rejected_: A rigid naming convention lets the tool be stateless about order — you can open any folder and the sequence is self-evident from filenames. Also makes manual inspection trivial.
 
 - **Two-pass rename for all reorder operations**: Rather than renaming files one-by-one (unsafe under collision), the server always uses temp names as an intermediate step.
   - _Alternative considered_: Detecting non-colliding files and only using temp for colliding pairs.
-  - _Why rejected_: Partial-rename strategies require careful analysis of the dependency graph between source and target names. The uniform two-pass approach is simpler to reason about, test, and debug. Performance difference is negligible for 1–99 files.
+  - _Why rejected_: Partial-rename strategies require careful analysis of the dependency graph between source and target names. The uniform two-pass approach is simpler to reason about, test, and debug. Performance difference is negligible for 1-99 files.
 
 - **Base64url-encoded paths for the image endpoint**: `GET /api/images/:encodedPath` decodes the base64url path and serves the file directly. This sidesteps URL-encoding issues with arbitrary filesystem paths (spaces, parentheses, non-ASCII characters in filenames).
   - _Alternative considered_: URL-percent-encoding the path; serving images via a numeric ID from a database.
@@ -102,7 +138,7 @@ Desktop image sequencer that solves the pain of manually renaming numbered slide
 
 ## Non-obvious Constraints
 
-- **Numbers are 1–99 only, not 0–100+**: The server validates `newNumber` as integer 1–99. The client also enforces this. You cannot have a `00-` prefix — the pattern `^\d{2}-` only matches two digit characters, but the number 0 would produce `00-` which the server would reject. If a folder needs more than 99 images in sequence, ThumbRack cannot handle it.
+- **Numbers are 1-99 only, not 0-100+**: The server validates `newNumber` as integer 1-99. The client also enforces this. You cannot have a `00-` prefix — the number 0 would produce `00-` which the server would reject. If a folder needs more than 99 images in sequence, ThumbRack cannot handle it.
 
 - **A divider cannot be placed before the very first item**: The UI silently refuses to drop a divider at position 0. Dragging a divider to the top position, or dragging the first image item onto its preceding divider, triggers auto-removal of the divider rather than placing it at position 0. This is intentional — a divider before the first item is meaningless (there is no "group above").
 
@@ -110,9 +146,13 @@ Desktop image sequencer that solves the pain of manually renaming numbered slide
 
 - **Home directory shorthand (`~/`) is supported in dir paths**: The folder endpoint expands `~/` to the user's home directory. Other shell-style path shortcuts (e.g. `~username/`, `$HOME`, `..`) are not expanded.
 
-- **Selection is lost on every reload**: `FolderContext.loadFolder` always resets `selected` to `null`. Only the `reload` function (which wraps `loadFolder`) attempts to restore the previous selection by matching `filename` in the refreshed sorted list. After a rename, the restored match finds the image at its new filename — but only if the reload pathway went through `reload`, not a fresh `loadFolder` call.
+- **Selection is lost on every reload**: `FolderContext.loadFolder` always resets `selected` to `null`. Only the `reload` function (which wraps `loadFolder`) attempts to restore the previous selection by matching `filename` in the refreshed sorted list via `sortedRef.current`. After a rename, the restored match finds the image at its new filename — but only if the reload pathway went through `reload`, not a fresh `loadFolder` call.
 
 - **The manifest is best-effort from the client's perspective**: On load, `FolderContext` makes two sequential API calls: one for the folder listing and one for the manifest. The manifest call is inside an inner `try/catch` that silently falls back to an empty boundaries array. A 404 from the manifest endpoint (e.g. no `.thumbrack.json` yet) is not an error — the manifest is created on first write.
+
+- **Divider IDs use a `__div:` prefix in dnd-kit**: In the SortableContext, dividers are interleaved with image items using IDs like `__div:03-title.png`. This prefix is how SortedPane distinguishes drag events on dividers from drag events on images. The prefix is stripped to get the anchor filename for manifest operations.
+
+- **The image endpoint validates file extensions server-side**: `GET /api/images/:encodedPath` only serves `.png`, `.jpg`, `.jpeg` files. Any other extension returns a 400 error. This prevents the base64url decoding from being abused to serve arbitrary files.
 
 ## Expert Mental Model
 
@@ -126,12 +166,14 @@ Desktop image sequencer that solves the pain of manually renaming numbered slide
 
 - **The sorted list is always re-derived from disk, never speculatively updated**: The client never optimistically updates the sorted list in state. After every drag-end or rename, it calls `reload` (which calls the server). This is a deliberate simplicity trade-off — it means there is always a brief flicker on reorder, but it guarantees the UI reflects ground truth rather than assumed state.
 
+- **The client has two fetch layers and they serve different purposes**: The generic `api` object (`request()` function using `BASE_URL`) is the AppyStack template's generic HTTP helper. The ThumbRack-specific helpers (`thumbRequest()`, `fetchFolder()`, etc.) use `BASE` (which falls back to `http://localhost:5021`) and unwrap the `ApiEnvelope` wrapper. New ThumbRack endpoints should use the `thumbRequest` layer, not the generic `api` object.
+
 ## Scope Limits
 
 - Does NOT work with remote or cloud-backed directories — only local filesystem paths accessible to the Node.js process running the server.
 - Does NOT edit image content — no crop, resize, rotate, annotate, or convert. Reorders and renumbers only.
 - Does NOT support `.gif`, `.webp`, `.svg`, `.bmp`, or other formats — only `.png`, `.jpg`, `.jpeg`.
-- Does NOT handle folders with more than 99 images in sequence — the `NN-` convention is two digits (01–99).
+- Does NOT handle folders with more than 99 images in sequence — the `NN-` convention is two digits (01-99).
 - Does NOT span multiple folders in one session — operates on one directory at a time.
 - Does NOT have user accounts, authentication, or multi-user access — single-user local tool with no auth layer.
 - Does NOT provide undo for rename operations — once files are renamed, reverting requires a manual re-drag or the planned B014 undo feature (currently backlogged).
@@ -141,12 +183,14 @@ Desktop image sequencer that solves the pain of manually renaming numbered slide
 
 - **`__tmp_` orphans after interrupted rename**: If the server process dies mid-two-pass-rename, files named `__tmp_N__<originalname>` are left on disk. The folder endpoint hides them from the UI, but they occupy disk space and may cause confusion in Finder. Recognition: files with `__tmp_` prefix visible in the filesystem. Fix: manually rename or delete the temp files; the original files are likely under their temp names.
 
-- **Stale manifest boundaries after external file rename**: If a user renames or deletes files outside ThumbRack, `.thumbrack.json` boundary anchors may point to filenames that no longer exist. On reload, the boundary silently disappears from the UI (the `groupBoundaries` filter in `SortedPane` just finds no match). Recognition: a divider that was visible is gone after reload. Fix: the "Regenerate Manifest" action in the kebab menu (⋮) reconciles the manifest against current filenames, removing stale entries.
+- **Stale manifest boundaries after external file rename**: If a user renames or deletes files outside ThumbRack, `.thumbrack.json` boundary anchors may point to filenames that no longer exist. On reload, the boundary silently disappears from the UI (the `groupBoundaries` filter in `SortedPane` just finds no match). Recognition: a divider that was visible is gone after reload. Fix: the "Regenerate Manifest" action in the kebab menu reconciles the manifest against current filenames, removing stale entries.
 
-- **Manual badge rename leaves a gap in the sequence**: `POST /api/rename` moves a single file to a new number without renumbering other files. If you rename `05-foo.png` to `07-foo.png`, there is now no `05-` and there are two files competing for position 7 (the existing `07-bar.png` is overwritten by the server's temp-swap rename). This is by design for single-file moves, but the sequence now has a gap at 5. Recognition: gap visible in the sorted pane. Fix: drag-to-reorder the full list to close gaps, which triggers a full `POST /api/reorder` that renumbers everything consecutively.
+- **Manual badge rename leaves a gap in the sequence**: `POST /api/rename` moves a single file to a new number without renumbering other files. If you rename `05-foo.png` to `07-foo.png`, there is now no `05-` and there are two files competing for position 7 (the existing `07-bar.png` is displaced via temp-swap). This is by design for single-file moves, but the sequence now has a gap at 5. Recognition: gap visible in the sorted pane. Fix: drag-to-reorder the full list to close gaps, which triggers a full `POST /api/reorder` that renumbers everything consecutively.
 
 - **Duplicate numbers after concurrent or external changes**: The client's collision check in `useManualEntry` reads from in-memory state at the time of the edit. If files were changed externally (or in another tab) since last reload, the client state may be stale. The server does not enforce uniqueness on `POST /api/rename` — it will overwrite if forced. Recognition: missing image in the sequence, unexpected label appearing on a number. Fix: reload the folder to sync with disk state before making manual edits.
 
 - **Directory not found after path change**: If the directory typed by the user does not exist, the server returns `404 Directory not found`. The `FolderContext.loadFolder` sets `error` state and the UI displays the error message. Recognition: red error message in place of the pane content. Not a bug — the folder path needs to be re-typed or selected from recents.
 
 - **`~/Downloads` pre-fill on startup shows no images**: On first load the folder input is pre-filled with `~/Downloads`. If the user has no `.png`, `.jpg`, or `.jpeg` files there, all three panes show "No images" / empty states. This looks like a crash but is correct behaviour. Recognition: empty panes with no error message. Fix: navigate to a folder that contains images.
+
+- **Silent failure on exclusion/divider network errors**: The `useExclusion` and `useDividers` hooks catch all errors from manifest read/write and show a toast notification. The operation silently fails — the UI does not retry. Recognition: toast message like "Failed to exclude image" or "Failed to add divider". Fix: retry the operation or reload the folder to re-sync state.
