@@ -2,6 +2,8 @@
 
 AI agent context for the AppyStack template project.
 
+**System context**: See [CONTEXT.md](CONTEXT.md) for purpose, core abstractions, key workflows, design decisions, non-obvious constraints, expert mental model, scope limits, and failure modes.
+
 ## What Is This?
 
 A RVETS stack boilerplate (React, Vite, Express, TypeScript, Socket.io) structured as an npm workspaces monorepo with three packages: client, server, and shared.
