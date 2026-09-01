@@ -35,3 +35,6 @@ test-results/
 
 # MCP tooling
 .playwright-mcp/
+
+.logs/
+.overmind.sock
